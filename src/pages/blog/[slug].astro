@@ -1,29 +1,27 @@
 ---
-import { getCollection, render } from 'astro:content';
+import { marked } from 'marked';
 import Base from '../../layouts/Base.astro';
+import { getEntry } from '../../lib/db.js';
 
-export async function getStaticPaths() {
-  const entries = await getCollection('blog');
-  return entries.map((entry) => ({ params: { slug: entry.id }, props: { entry } }));
-}
+const { slug } = Astro.params;
+const entry = await getEntry('blog', slug);
+if (!entry) return new Response(null, { status: 404 });
 
-const { entry } = Astro.props;
-const { Content } = await render(entry);
-const dateStr = entry.data.date.toLocaleDateString('es-ES', {
+const contentHtml = await marked.parse(entry.body ?? '');
+const dateStr = new Date(entry.date).toLocaleDateString('es-ES', {
   year: 'numeric',
   month: 'long',
   day: 'numeric',
+  timeZone: 'UTC',
 });
 ---
 
-<Base title={entry.data.title}>
+<Base title={entry.title}>
   <article class="post">
     <a class="back" href="/">← volver</a>
-    <h1>{entry.data.title}</h1>
+    <h1>{entry.title}</h1>
     <time>{dateStr}</time>
-    <div class="prose">
-      <Content />
-    </div>
+    <div class="prose" set:html={contentHtml}></div>
   </article>
 </Base>
 

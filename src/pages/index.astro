@@ -1,71 +1,68 @@
 ---
-import { getCollection } from 'astro:content';
 import Base from '../layouts/Base.astro';
 import PauseMenu from '../components/PauseMenu.svelte';
+import { getEntries } from '../lib/db.js';
 import { diarioImage } from '../lib/diario.js';
 import { moodToCondition, moodColor } from '../lib/conditions.js';
 
-const diario = await getCollection('diario');
-const blog = await getCollection('blog');
+const all = await getEntries(); // ambos tipos, ordenado por date desc
 
-// El "estado" del menú = el mood de la última entrada del diario.
-const latestDiario = [...diario].sort(
-  (a, b) => b.data.date.valueOf() - a.data.date.valueOf()
-)[0];
-const condition = moodToCondition(latestDiario?.data.mood);
-
-// EQUIP = pixel art (sprite/objeto que te representa).
-const equip = { art: '' }; // ej: /equip.png en public/
-// ITEM = el disco que te tiene marcado ahora.
-const item = {
-  title: '',
-  artist: '',
-  cover: '', // ej: /album.jpg en public/
-  url: '', // link de Spotify/Apple/YouTube
+const fmt = (d) =>
+  new Date(d).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' });
+const monthFmt = (d) => {
+  const dt = new Date(d);
+  return `${dt.toLocaleDateString('es-ES', { month: 'long', timeZone: 'UTC' })} ${dt.getUTCFullYear()}`;
 };
+const excerpt = (md = '') =>
+  md.replace(/[#>*_`\-]/g, '').replace(/\s+/g, ' ').trim().slice(0, 110);
 
-// INVENTARIO = tus cosas del momento (máx 8). Cada item:
-// { label, sub, cover, url, icon }. cover = imagen en public/.
+// el "estado" del menú = mood de la última entrada del diario
+const latestDiario = all.find((e) => e.type === 'diario');
+const condition = moodToCondition(latestDiario?.mood);
+
+const entries = all.map((e) =>
+  e.type === 'diario'
+    ? {
+        type: 'diario',
+        title: e.title,
+        date: new Date(e.date).toISOString(),
+        dateLabel: fmt(e.date),
+        monthLabel: monthFmt(e.date),
+        summary: excerpt(e.body),
+        image: diarioImage(e),
+        mood: e.mood ?? '',
+        moodColor: moodColor(e.mood),
+        href: `/diario/${e.slug}`,
+      }
+    : {
+        type: 'blog',
+        title: e.title,
+        date: new Date(e.date).toISOString(),
+        dateLabel: fmt(e.date),
+        monthLabel: monthFmt(e.date),
+        summary: e.summary ?? excerpt(e.body),
+        image: '',
+        href: `/blog/${e.slug}`,
+      }
+);
+
+// inventario "del momento" (placeholders por ahora)
+const equip = { art: '' };
+const item = { title: '', artist: '', cover: '', url: '' };
 const inventory = [
   { label: 'Libro actual', sub: '(autor)', cover: '', url: '', icon: '📖' },
   { label: 'Álbum del momento', sub: '(artista)', cover: '', url: '', icon: '💿' },
   { label: 'Jugando', sub: '(juego)', cover: '', url: '', icon: '🎮' },
 ];
-
-const fmt = (d) =>
-  d.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' });
-const monthFmt = (d) =>
-  `${d.toLocaleDateString('es-ES', { month: 'long', timeZone: 'UTC' })} ${d.getUTCFullYear()}`;
-
-const excerpt = (md = '') =>
-  md.replace(/[#>*_`\-]/g, '').replace(/\s+/g, ' ').trim().slice(0, 110);
-
-const entries = [
-  ...diario.map((e) => ({
-    type: 'diario',
-    title: e.data.title,
-    date: e.data.date.toISOString(),
-    dateLabel: fmt(e.data.date),
-    summary: excerpt(e.body),
-    image: diarioImage(e.data),
-    monthLabel: monthFmt(e.data.date),
-    mood: e.data.mood ?? '',
-    moodColor: moodColor(e.data.mood),
-    href: `/diario/${e.id}`,
-  })),
-  ...blog.map((e) => ({
-    type: 'blog',
-    title: e.data.title,
-    date: e.data.date.toISOString(),
-    dateLabel: fmt(e.data.date),
-    summary: e.data.summary ?? excerpt(e.body),
-    image: '',
-    monthLabel: monthFmt(e.data.date),
-    href: `/blog/${e.id}`,
-  })),
-].sort((a, b) => new Date(b.date).valueOf() - new Date(a.date).valueOf());
 ---
 
 <Base title="0xb4d1dea">
-  <PauseMenu client:load entries={entries} condition={condition} equip={equip} item={item} inventory={inventory} />
+  <PauseMenu
+    client:load
+    entries={entries}
+    condition={condition}
+    equip={equip}
+    item={item}
+    inventory={inventory}
+  />
 </Base>
