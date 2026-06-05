@@ -23,6 +23,16 @@ const MOOD_ALIAS = {
 const rawMood = (latestDiario?.data.mood ?? 'fine').toLowerCase().trim();
 const condition = MOOD_ALIAS[rawMood] ?? rawMood;
 
+// EQUIP = pixel art (sprite/objeto que te representa).
+const equip = { art: '' }; // ej: /equip.png en public/
+// ITEM = el disco que te tiene marcado ahora.
+const item = {
+  title: '',
+  artist: '',
+  cover: '', // ej: /album.jpg en public/
+  url: '', // link de Spotify/Apple/YouTube
+};
+
 const fmt = (d) =>
   d.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
 
@@ -52,5 +62,5 @@ const entries = [
 ---
 
 <Base title="0xb4d1dea">
-  <PauseMenu client:load entries={entries} condition={condition} />
+  <PauseMenu client:load entries={entries} condition={condition} equip={equip} item={item} />
 </Base>

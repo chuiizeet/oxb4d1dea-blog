@@ -1,11 +1,25 @@
 <script>
   let {
     entries = [],
-    github = 'https://github.com/chuiizeet',
     name = 'Chuy',
     avatar = '/pfp.jpg',
     condition = 'fine',
+    equip = null, // { art }  -> pixel art
+    item = null,  // { cover, title, artist, url } -> portada de disco
   } = $props();
+
+  let tab = $state('todo'); // todo | diario | blog
+  let list = $derived(tab === 'todo' ? entries : entries.filter((e) => e.type === tab));
+  let sel = $state(entries[0] ?? null);
+  $effect(() => {
+    sel = list[0] ?? null;
+  });
+
+  const tabs = [
+    { id: 'todo', label: 'TODO' },
+    { id: 'diario', label: 'DIARIO' },
+    { id: 'blog', label: 'BLOG' },
+  ];
 
   // estados tipo RE2 + estados de ánimo propios. Cada uno: color, velocidad y
   // forma de onda del ECG. (pathLength=100 normaliza el "dibujado" de la línea.)
@@ -20,45 +34,17 @@
     calm:    { label: 'CALM',    color: '#44e0d0', dur: 3.0, points: '0,22 30,20 60,24 90,20 120,24 150,20 180,24 200,22' },
   };
   let cond = $derived(CONDITIONS[condition] ?? CONDITIONS.fine);
-
-  let tab = $state('todo'); // todo | diario | blog
-  let list = $derived(tab === 'todo' ? entries : entries.filter((e) => e.type === tab));
-  let sel = $state(entries[0] ?? null);
-
-  // al cambiar de pestaña, selecciona el primero de la lista
-  $effect(() => {
-    sel = list[0] ?? null;
-  });
-
-  const tabs = [
-    { id: 'todo', label: 'TODO' },
-    { id: 'diario', label: 'DIARIO' },
-    { id: 'blog', label: 'BLOG' },
-  ];
 </script>
 
 <div class="menu">
-  <!-- barra de estado: portrait + nombre + condición -->
-  <section class="statusbar" aria-label="estado">
+  <!-- consola: portrait (alto) + tabs (arriba) + slots (condition/equip/item) -->
+  <section class="console">
     <div class="portrait panel">
-      <img class="pfp" src={avatar} alt={name} width="56" height="56" />
+      <img class="pfp" src={avatar} alt={name} />
       <span class="name">{name}</span>
     </div>
 
-    <div class="cond panel" style="--c: {cond.color}">
-      <svg class="ecg" viewBox="0 0 200 44" preserveAspectRatio="none" aria-hidden="true">
-        <polyline pathLength="100" points={cond.points} style="animation-duration: {cond.dur}s" />
-      </svg>
-      <div class="condrow">
-        <span class="label">CONDITION</span>
-        <span class="value">{cond.label}</span>
-      </div>
-    </div>
-  </section>
-
-  <!-- pestañas (File / Map / Item / Exit) -->
-  <nav class="tabs" aria-label="secciones">
-    <div class="tabset">
+    <nav class="tabs" aria-label="secciones">
       {#each tabs as t}
         <button
           class="tab"
@@ -67,9 +53,45 @@
           aria-pressed={tab === t.id}
         >{t.label}</button>
       {/each}
+    </nav>
+
+    <div class="slots">
+      <div class="cond panel" style="--c: {cond.color}">
+        <svg class="ecg" viewBox="0 0 200 44" preserveAspectRatio="none" aria-hidden="true">
+          <polyline pathLength="100" points={cond.points} style="animation-duration: {cond.dur}s" />
+        </svg>
+        <div class="srow">
+          <span class="label">CONDITION</span>
+          <span class="value">{cond.label}</span>
+        </div>
+      </div>
+
+      <div class="equip panel">
+        <div class="cell">
+          {#if equip?.art}
+            <img src={equip.art} alt="" />
+          {:else}
+            <span class="ph">▦</span>
+          {/if}
+        </div>
+        <div class="srow"><span class="label">EQUIP</span></div>
+      </div>
+
+      <a
+        class="item panel"
+        href={item?.url || undefined}
+        target={item?.url ? '_blank' : undefined}
+        rel="noopener"
+        aria-label={item?.title ? `Disco: ${item.title}` : 'Disco'}
+      >
+        {#if item?.cover}
+          <img src={item.cover} alt={item.title ?? ''} />
+        {:else}
+          <span class="ph">♪</span>
+        {/if}
+      </a>
     </div>
-    <a class="tab exit" href={github} target="_blank" rel="noopener">GITHUB ↗</a>
-  </nav>
+  </section>
 
   <!-- preview + descripción (objeto seleccionado) -->
   <section class="preview panel" aria-live="polite">
@@ -122,71 +144,106 @@
   .menu {
     min-height: 100dvh;
     width: 100%;
-    max-width: var(--crt-w);   /* no se estira a lo ancho (proporción CRT) */
+    max-width: var(--crt-w); /* proporción CRT */
     margin-inline: auto;
     box-sizing: border-box;
     padding: clamp(12px, 4vw, 28px);
-    background:
-      radial-gradient(120% 90% at 50% 0%, #1a2348 0%, #0a0f24 60%, #05070f 100%);
+    background: radial-gradient(120% 90% at 50% 0%, #1a2348 0%, #0a0f24 60%, #05070f 100%);
     color: var(--ink);
     font-family: ui-monospace, 'SF Mono', 'Courier New', monospace;
     display: grid;
     gap: 10px;
     grid-template-columns: 1fr;
-    grid-template-areas:
-      'status'
-      'tabs'
-      'preview'
-      'grid';
+    grid-template-areas: 'console' 'preview' 'grid';
     align-content: start;
   }
 
-  /* paneles biselados estilo PS1 */
   .panel {
     background: linear-gradient(180deg, var(--slot-a), var(--slot-b));
     border: 2px solid;
     border-color: var(--hi) var(--lo) var(--lo) var(--hi);
   }
 
-  /* ---- status ---- */
-  .statusbar {
-    grid-area: status;
-    display: flex;
-    gap: 10px;
+  /* ---- consola superior ---- */
+  .console {
+    grid-area: console;
+    display: grid;
+    gap: 4px 8px;
+    grid-template-columns: auto 1fr;
+    grid-template-areas:
+      'portrait tabs'
+      'portrait slots';
     align-items: stretch;
   }
+
   .portrait {
+    grid-area: portrait;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 8px 12px;
-    gap: 4px;
-    min-width: 92px;
+    gap: 10px;
+    padding: 12px;
   }
   .pfp {
-    width: 56px;
-    height: 56px;
+    width: 104px;
+    max-width: 26vw;
+    aspect-ratio: 1;
     object-fit: cover;
     image-rendering: pixelated;
     border: 1px solid var(--lo);
     background: #0c1430;
   }
-  .name { color: var(--ink); font-size: 13px; letter-spacing: 0.04em; }
+  .name { color: var(--ink); font-size: 14px; letter-spacing: 0.04em; }
 
-  .cond {
-    flex: 1;
+  .tabs {
+    grid-area: tabs;
+    display: flex;
+    gap: 6px;
+    align-items: flex-end;
+    justify-content: flex-end; /* de derecha a izquierda, como RE2 */
+  }
+  .tab {
+    flex: 0 0 auto;
+    text-align: center;
+    background: linear-gradient(180deg, #44568a, #2b3a64);
+    border: 2px solid;
+    border-color: var(--hi) var(--lo) var(--lo) var(--hi);
+    color: var(--ink);
+    font: inherit;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    padding: 4px 14px;
+    cursor: pointer;
+  }
+  .tab.active { color: var(--red); text-shadow: 0 0 8px rgba(255, 74, 61, 0.6); }
+  .tab:hover { filter: brightness(1.15); }
+
+  /* ---- slots: condition | equip (rect iguales) | item (cuadrado) ---- */
+  .slots {
+    grid-area: slots;
+    display: flex;
+    gap: 8px;
+    align-items: stretch;
+  }
+  .cond,
+  .equip {
+    flex: 1 1 0;
+    min-width: 0;
     display: flex;
     flex-direction: column;
     justify-content: center;
     padding: 8px 12px;
-    min-width: 0;
+  }
+  .cond,
+  .equip,
+  .item {
     background:
       repeating-linear-gradient(0deg, rgba(150, 190, 220, 0.06) 0 1px, transparent 1px 11px),
       repeating-linear-gradient(90deg, rgba(150, 190, 220, 0.06) 0 1px, transparent 1px 14px),
       linear-gradient(180deg, #0c1830, #050b1a);
   }
-  .ecg { width: 100%; height: 38px; }
+  .ecg { width: 100%; height: 34px; }
   .ecg polyline {
     fill: none;
     stroke: var(--c, var(--green));
@@ -199,35 +256,31 @@
     animation: ecg 2.4s linear infinite;
   }
   @keyframes ecg { to { stroke-dashoffset: 0; } }
-  .condrow { display: flex; justify-content: space-between; align-items: baseline; margin-top: 2px; }
+  .srow { display: flex; justify-content: space-between; align-items: baseline; margin-top: 4px; gap: 8px; }
   .label { color: var(--muted); font-size: 11px; letter-spacing: 0.15em; }
   .value { color: var(--c, var(--green)); font-size: 15px; letter-spacing: 0.12em; text-shadow: 0 0 8px var(--c, var(--green)); }
 
-  /* ---- tabs ---- */
-  .tabs {
-    grid-area: tabs;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    align-items: center;
-    justify-content: space-between;
+  .equip .cell {
+    flex: 1;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    min-height: 34px;
   }
-  .tabset { display: flex; gap: 6px; flex-wrap: wrap; }
-  .tab {
-    background: linear-gradient(180deg, #44568a, #2b3a64);
-    border: 2px solid;
-    border-color: var(--hi) var(--lo) var(--lo) var(--hi);
-    color: var(--ink);
-    font: inherit;
-    font-size: 13px;
-    letter-spacing: 0.12em;
-    padding: 7px 14px;
-    cursor: pointer;
+  .equip .cell img { max-width: 100%; max-height: 100%; object-fit: contain; image-rendering: pixelated; }
+  .ph { color: var(--muted); font-size: 24px; }
+
+  .item {
+    flex: 0 0 auto;
+    aspect-ratio: 1;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    padding: 0;
     text-decoration: none;
   }
-  .tab.active { color: var(--red); text-shadow: 0 0 8px rgba(255, 74, 61, 0.6); }
-  .tab:hover { filter: brightness(1.15); }
-  .tab.exit { color: var(--muted); }
+  .item img { width: 100%; height: 100%; object-fit: cover; }
+  .item .ph { font-size: 26px; }
 
   /* ---- preview ---- */
   .preview {
@@ -284,19 +337,31 @@
     outline: none;
   }
 
-  /* ---- desktop: dos columnas como el juego ---- */
+  /* ---- desktop: dos columnas ---- */
   @media (min-width: 860px) {
     .menu {
       grid-template-columns: minmax(280px, 1fr) 1.55fr;
       grid-template-areas:
-        'status status'
-        'tabs   tabs'
+        'console console'
         'preview grid';
       gap: 12px;
     }
     .preview { flex-direction: column; position: sticky; top: 12px; }
     .thumb { width: 100%; height: 200px; }
     .grid { grid-template-columns: 1fr 1fr; }
+  }
+
+  /* ---- móvil: portrait horizontal, slots envuelven ---- */
+  @media (max-width: 600px) {
+    .console {
+      grid-template-columns: 1fr;
+      grid-template-areas: 'portrait' 'tabs' 'slots';
+    }
+    .portrait { flex-direction: row; justify-content: flex-start; gap: 14px; }
+    .pfp { width: 64px; max-width: none; }
+    .slots { flex-wrap: wrap; }
+    .cond { flex: 1 1 100%; }
+    .equip { flex: 1 1 0; }
   }
 
   @media (prefers-reduced-motion: reduce) {
