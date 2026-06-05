@@ -1,0 +1,27 @@
+---
+import Base from '../layouts/Base.astro';
+import Editor from '../components/Editor.svelte';
+import { getAllEntries } from '../lib/db.js';
+import { CONDITIONS } from '../lib/conditions.js';
+
+const rows = await getAllEntries();
+const entries = rows.map((e) => ({
+  id: e.id,
+  type: e.type,
+  slug: e.slug,
+  title: e.title,
+  body: e.body ?? '',
+  mood: e.mood ?? '',
+  exfile: e.exfile ?? null,
+  image: e.image ?? '',
+  summary: e.summary ?? '',
+  tags: e.tags ?? [],
+  published: e.published,
+  date: new Date(e.date).toISOString().slice(0, 10),
+}));
+const moods = Object.entries(CONDITIONS).map(([id, c]) => ({ id, label: c.label }));
+---
+
+<Base title="Editor">
+  <Editor client:load entries={entries} moods={moods} />
+</Base>

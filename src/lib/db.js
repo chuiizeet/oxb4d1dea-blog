@@ -25,3 +25,42 @@ export async function getEntry(type, slug) {
     select * from entries where type = ${type} and slug = ${slug} limit 1`;
   return rows[0] ?? null;
 }
+
+// ── editor ──────────────────────────────────────────────────────────────
+export async function getAllEntries() {
+  return await db()`select * from entries order by date desc`;
+}
+
+const COLS = ['type', 'slug', 'title', 'body', 'mood', 'exfile', 'image', 'summary', 'tags', 'date', 'published'];
+
+export async function upsertEntry(data) {
+  const s = db();
+  const row = {
+    type: data.type,
+    slug: data.slug,
+    title: data.title,
+    body: data.body ?? '',
+    mood: data.mood || null,
+    exfile: data.exfile ?? null,
+    image: data.image || null,
+    summary: data.summary || null,
+    tags: Array.isArray(data.tags) ? data.tags : [],
+    date: data.date,
+    published: data.published ?? true,
+  };
+  let saved;
+  if (data.id) {
+    [saved] = await s`update entries set ${s(row, ...COLS)} where id = ${data.id} returning *`;
+  } else {
+    [saved] = await s`
+      insert into entries ${s(row, ...COLS)}
+      on conflict (type, slug) do update set ${s(row, ...COLS.filter((c) => c !== 'type' && c !== 'slug'))}
+      returning *`;
+  }
+  return saved;
+}
+
+export async function addRevision(entryId, snapshot, note = null) {
+  const s = db();
+  await s`insert into revisions (entry_id, snapshot, note) values (${entryId}, ${s.json(snapshot)}, ${note})`;
+}

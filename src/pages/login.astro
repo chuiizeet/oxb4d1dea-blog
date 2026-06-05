@@ -1,0 +1,47 @@
+---
+import Base from '../layouts/Base.astro';
+import { checkPassword, createSession, COOKIE, MAX_AGE } from '../lib/auth.js';
+
+let error = '';
+if (Astro.request.method === 'POST') {
+  const form = await Astro.request.formData();
+  const pw = form.get('password')?.toString() ?? '';
+  if (checkPassword(pw)) {
+    Astro.cookies.set(COOKIE, createSession(), {
+      httpOnly: true,
+      sameSite: 'lax',
+      path: '/',
+      maxAge: MAX_AGE,
+      secure: import.meta.env.PROD,
+    });
+    return Astro.redirect('/editor');
+  }
+  error = 'Contraseña incorrecta.';
+}
+---
+
+<Base title="Acceso">
+  <main class="login">
+    <form method="POST" class="box">
+      <h1>ACCESO</h1>
+      <input type="password" name="password" placeholder="contraseña" autocomplete="current-password" autofocus />
+      {error && <p class="err">{error}</p>}
+      <button type="submit">ENTRAR</button>
+    </form>
+  </main>
+</Base>
+
+<style>
+  .login { min-height: 100dvh; display: grid; place-items: center; padding: 20px; background: #07140d; }
+  .box {
+    display: flex; flex-direction: column; gap: 14px;
+    width: min(320px, 92vw); padding: 28px;
+    background: #0c1a12; border: 2px solid; border-color: #2c7a4d #061008 #061008 #2c7a4d;
+    font-family: ui-monospace, 'Courier New', monospace;
+  }
+  h1 { margin: 0 0 6px; color: #5bff8f; letter-spacing: 0.2em; font-size: 18px; text-align: center; text-shadow: 0 0 10px rgba(91,255,143,.5); }
+  input { background: #05100a; border: 1px solid #2c7a4d; color: #d9f5e3; padding: 10px; font: inherit; }
+  button { background: transparent; border: 1px solid #2c7a4d; color: #9dffc1; padding: 10px; font: inherit; letter-spacing: 0.12em; cursor: pointer; }
+  button:hover { background: rgba(91,255,143,.12); }
+  .err { color: #ff6a5a; font-size: 13px; margin: 0; text-align: center; }
+</style>
