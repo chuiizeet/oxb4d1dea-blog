@@ -171,7 +171,11 @@
 
   .screen {
     position: absolute;
-    inset: 0;
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: min(100%, var(--crt-w));   /* pantalla CRT centrada, letterbox a los lados */
     display: flex;
     flex-direction: column;
     align-items: center;

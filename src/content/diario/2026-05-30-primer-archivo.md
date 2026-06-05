@@ -2,7 +2,7 @@
 title: Primer archivo
 date: 2026-05-30
 tags: [diario]
-mood: tranquilo
+mood: tired
 image: /diario/og-ejemplo.png
 ---
 

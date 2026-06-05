@@ -22,11 +22,13 @@ const { title = '0xb4d1dea', fullbleed = false } = Astro.props;
     --muted: #8c8475;
     --amber: #c89b5a;
     --line: #211d18;
+    /* ancho "CRT": ligado al alto en proporción 4:3 (no crece a lo ancho) */
+    --crt-w: calc(100dvh * 4 / 3);
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; padding: 0; }
   body {
-    background: var(--bg);
+    background: #000;
     color: var(--ink);
     font-family: ui-monospace, 'SF Mono', 'Courier New', monospace;
     min-height: 100vh;
