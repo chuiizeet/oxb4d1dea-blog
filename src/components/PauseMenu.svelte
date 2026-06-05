@@ -1,4 +1,7 @@
 <script>
+  import { onMount } from 'svelte';
+  import Crt from './Crt.svelte';
+
   let {
     entries = [],
     name = 'Chuy',
@@ -8,18 +11,31 @@
     item = null,  // { cover, title, artist, url } -> portada de disco
   } = $props();
 
-  let tab = $state('todo'); // todo | diario | blog
-  let list = $derived(tab === 'todo' ? entries : entries.filter((e) => e.type === tab));
-  let sel = $state(entries[0] ?? null);
+  let tab = $state('diario'); // diario | blog
+  let list = $derived(entries.filter((e) => e.type === tab));
+  let sel = $state(entries.find((e) => e.type === 'diario') ?? entries[0] ?? null);
   $effect(() => {
     sel = list[0] ?? null;
   });
 
   const tabs = [
-    { id: 'todo', label: 'TODO' },
     { id: 'diario', label: 'DIARIO' },
     { id: 'blog', label: 'BLOG' },
   ];
+
+  // settings (modal estilo RE4) + filtro CRT (persistido)
+  let showSettings = $state(false);
+  let crt = $state(true);
+  function toggleCrt() {
+    crt = !crt;
+    try { localStorage.setItem('crt', crt ? '1' : '0'); } catch (e) {}
+  }
+  onMount(() => {
+    try {
+      const v = localStorage.getItem('crt');
+      if (v !== null) crt = v === '1';
+    } catch (e) {}
+  });
 
   // estados tipo RE2 + estados de ánimo propios. Cada uno: color, velocidad y
   // forma de onda del ECG. (pathLength=100 normaliza el "dibujado" de la línea.)
@@ -29,7 +45,7 @@
     danger:  { label: 'DANGER',  color: '#ff4a3d', dur: 1.1, points: '0,22 26,22 32,5 38,39 44,8 50,38 56,22 88,22 94,6 100,40 106,9 112,37 118,22 158,22 166,8 174,36 182,22 200,22' },
     poison:  { label: 'POISON',  color: '#b06cff', dur: 2.6, points: '0,22 20,14 40,30 60,12 80,32 100,14 120,30 140,12 160,32 180,16 200,22' },
     sadness: { label: 'SADNESS', color: '#5a93d6', dur: 3.8, points: '0,24 56,24 86,24 96,28 106,22 116,27 128,24 160,25 200,26' },
-    tired:   { label: 'TIRED',   color: '#9aa6c6', dur: 3.2, points: '0,23 70,23 82,18 90,27 98,23 150,23 162,19 170,26 178,23 200,23' },
+    tired:   { label: 'TIRED',   color: '#45cdff', dur: 3.2, points: '0,23 70,23 82,18 90,27 98,23 150,23 162,19 170,26 178,23 200,23' },
     hyped:   { label: 'HYPED',   color: '#ffae3c', dur: 0.95, points: '0,22 24,22 30,7 36,37 42,11 48,33 54,22 78,22 84,7 90,37 96,11 102,33 108,22 132,22 138,7 144,37 150,22 200,22' },
     calm:    { label: 'CALM',    color: '#44e0d0', dur: 3.0, points: '0,22 30,20 60,24 90,20 120,24 150,20 180,24 200,22' },
   };
@@ -39,9 +55,9 @@
 <div class="menu">
   <!-- consola: portrait (alto) + tabs (arriba) + slots (condition/equip/item) -->
   <section class="console">
-    <div class="portrait panel">
-      <img class="pfp" src={avatar} alt={name} />
-      <span class="name">{name}</span>
+    <div class="portrait">
+      <div class="namebox panel"><span class="name">{name}</span></div>
+      <div class="pfpbox panel"><img class="pfp" src={avatar} alt={name} /></div>
     </div>
 
     <nav class="tabs" aria-label="secciones">
@@ -53,6 +69,7 @@
           aria-pressed={tab === t.id}
         >{t.label}</button>
       {/each}
+      <button class="tab set" class:active={showSettings} onclick={() => (showSettings = true)}>SETTINGS</button>
     </nav>
 
     <div class="slots">
@@ -127,6 +144,32 @@
       </a>
     {/each}
   </section>
+
+  {#if crt}<Crt />{/if}
+
+  {#if showSettings}
+    <div
+      class="settings"
+      role="dialog"
+      aria-modal="true"
+      onclick={(e) => { if (e.currentTarget === e.target) showSettings = false; }}
+    >
+      <div class="setpanel">
+        <h2 class="settitle">AJUSTES</h2>
+        <div class="setrow">
+          <span>Filtro CRT</span>
+          <button class="toggle" onclick={toggleCrt}>{crt ? 'ON' : 'OFF'}</button>
+        </div>
+        <div class="setdiv"></div>
+        <div class="about">
+          <div class="ah">ACERCA DE</div>
+          <p>0xb4d1dea — diario &amp; misceláneo.</p>
+          <p>Hecho por Chuy. Astro + Svelte, inspirado en los menús de Resident Evil clásico.</p>
+        </div>
+        <button class="setexit" onclick={() => (showSettings = false)}>◄ CERRAR</button>
+      </div>
+    </div>
+  {/if}
 </div>
 
 <style>
@@ -180,21 +223,28 @@
     grid-area: portrait;
     display: flex;
     flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    padding: 12px;
+    gap: 6px;
+  }
+  .namebox {
+    display: grid;
+    place-items: center;
+    padding: 8px;
+  }
+  .name { color: var(--ink); font-size: 14px; letter-spacing: 0.08em; }
+  .pfpbox {
+    flex: 1;
+    display: grid;
+    place-items: center;
+    padding: 10px;
+    min-height: 0;
   }
   .pfp {
-    width: 104px;
+    width: 110px;
     max-width: 26vw;
     aspect-ratio: 1;
     object-fit: cover;
     image-rendering: pixelated;
-    border: 1px solid var(--lo);
-    background: #0c1430;
   }
-  .name { color: var(--ink); font-size: 14px; letter-spacing: 0.04em; }
 
   .tabs {
     grid-area: tabs;
@@ -237,7 +287,9 @@
   }
   .cond,
   .equip,
-  .item {
+  .item,
+  .namebox,
+  .pfpbox {
     background:
       repeating-linear-gradient(0deg, rgba(150, 190, 220, 0.06) 0 1px, transparent 1px 11px),
       repeating-linear-gradient(90deg, rgba(150, 190, 220, 0.06) 0 1px, transparent 1px 14px),
@@ -337,6 +389,62 @@
     outline: none;
   }
 
+  /* ---- settings (modal estilo RE4) ---- */
+  .settings {
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    display: grid;
+    place-items: center;
+    padding: 16px;
+    background: rgba(0, 0, 0, 0.62);
+  }
+  .setpanel {
+    width: min(560px, 92vw);
+    max-height: 90dvh;
+    overflow: auto;
+    padding: clamp(22px, 5vw, 40px);
+    background:
+      radial-gradient(120% 100% at 50% 0%, #5a1414 0%, #2a0a0a 55%, #150404 100%);
+    border: 2px solid;
+    border-color: #8a3232 #160505 #160505 #8a3232;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.7);
+    color: #ead9d4;
+    font-family: Georgia, 'Times New Roman', serif;
+  }
+  .settitle {
+    margin: 0 0 22px;
+    text-align: center;
+    font-size: clamp(22px, 5vw, 30px);
+    letter-spacing: 0.08em;
+    color: #f3e8e4;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+  }
+  .setrow {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 2px;
+    font-size: 17px;
+  }
+  .toggle,
+  .setexit {
+    background: transparent;
+    border: 1px solid #9a4040;
+    color: #ffd2c4;
+    font: inherit;
+    letter-spacing: 0.12em;
+    padding: 5px 18px;
+    cursor: pointer;
+  }
+  .toggle:hover,
+  .setexit:hover { background: rgba(255, 90, 70, 0.16); }
+  .setdiv { height: 1px; background: rgba(255, 180, 160, 0.22); margin: 16px 0; }
+  .about .ah { letter-spacing: 0.22em; color: #db8a7a; font-size: 13px; margin-bottom: 10px; }
+  .about p { margin: 0 0 8px; font-size: 15px; line-height: 1.6; color: #d8c2bc; }
+  .setexit { display: block; margin: 24px auto 0; }
+
   /* ---- desktop: dos columnas ---- */
   @media (min-width: 860px) {
     .menu {
@@ -357,8 +465,7 @@
       grid-template-columns: 1fr;
       grid-template-areas: 'portrait' 'tabs' 'slots';
     }
-    .portrait { flex-direction: row; justify-content: flex-start; gap: 14px; }
-    .pfp { width: 64px; max-width: none; }
+    .pfp { width: 96px; }
     .slots { flex-wrap: wrap; }
     .cond { flex: 1 1 100%; }
     .equip { flex: 1 1 0; }
