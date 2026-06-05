@@ -33,6 +33,14 @@ const item = {
   url: '', // link de Spotify/Apple/YouTube
 };
 
+// INVENTARIO = tus cosas del momento (máx 8). Cada item:
+// { label, sub, cover, url, icon }. cover = imagen en public/.
+const inventory = [
+  { label: 'Libro actual', sub: '(autor)', cover: '', url: '', icon: '📖' },
+  { label: 'Álbum del momento', sub: '(artista)', cover: '', url: '', icon: '💿' },
+  { label: 'Jugando', sub: '(juego)', cover: '', url: '', icon: '🎮' },
+];
+
 const fmt = (d) =>
   d.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
 
@@ -62,5 +70,5 @@ const entries = [
 ---
 
 <Base title="0xb4d1dea">
-  <PauseMenu client:load entries={entries} condition={condition} equip={equip} item={item} />
+  <PauseMenu client:load entries={entries} condition={condition} equip={equip} item={item} inventory={inventory} />
 </Base>

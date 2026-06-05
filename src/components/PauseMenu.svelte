@@ -9,10 +9,11 @@
     condition = 'fine',
     equip = null, // { art }  -> pixel art
     item = null,  // { cover, title, artist, url } -> portada de disco
+    inventory = [], // [{ label, sub, cover, url, icon }] -> máx 8 (items del momento)
   } = $props();
 
-  let tab = $state('diario'); // diario | blog
-  let list = $derived(entries.filter((e) => e.type === tab));
+  let tab = $state('diario'); // diario | blog | items
+  let list = $derived(tab === 'items' ? inventory : entries.filter((e) => e.type === tab));
   let sel = $state(entries.find((e) => e.type === 'diario') ?? entries[0] ?? null);
   $effect(() => {
     sel = list[0] ?? null;
@@ -21,6 +22,7 @@
   const tabs = [
     { id: 'diario', label: 'DIARIO' },
     { id: 'blog', label: 'BLOG' },
+    { id: 'items', label: 'ITEMS' },
   ];
 
   // settings (modal estilo RE4) + filtro CRT (persistido)
@@ -52,7 +54,7 @@
   let cond = $derived(CONDITIONS[condition] ?? CONDITIONS.fine);
 </script>
 
-<div class="menu">
+<div class="menu" class:itemsview={tab === 'items'}>
   <!-- consola: portrait (alto) + tabs (arriba) + slots (condition/equip/item) -->
   <section class="console">
     <div class="portrait">
@@ -112,7 +114,18 @@
 
   <!-- preview + descripción (objeto seleccionado) -->
   <section class="preview panel" aria-live="polite">
-    {#if sel}
+    {#if sel?.label}
+      {#if sel.cover}
+        <div class="thumb"><img src={sel.cover} alt="" loading="lazy" /></div>
+      {:else}
+        <div class="thumb empty"><span>{sel.icon ?? '▤'}</span></div>
+      {/if}
+      <div class="info">
+        <div class="ptitle">{sel.label}</div>
+        {#if sel.sub}<div class="pmeta">{sel.sub}</div>{/if}
+        {#if sel.desc}<p class="pdesc">{sel.desc}</p>{/if}
+      </div>
+    {:else if sel?.title}
       {#if sel.image}
         <div class="thumb"><img src={sel.image} alt="" loading="lazy" /></div>
       {:else}
@@ -120,29 +133,55 @@
       {/if}
       <div class="info">
         <div class="ptitle">{sel.title}</div>
-        <div class="pmeta">{sel.type.toUpperCase()} · {sel.dateLabel}</div>
+        <div class="pmeta">{(sel.type ?? '').toUpperCase()} · {sel.dateLabel}</div>
         {#if sel.summary}<p class="pdesc">{sel.summary}</p>{/if}
       </div>
     {:else}
-      <p class="pdesc">Sin archivos todavía.</p>
+      <p class="pdesc">{tab === 'items' ? 'Inventario vacío.' : 'Sin archivos todavía.'}</p>
     {/if}
   </section>
 
   <!-- grilla de ítems = entradas -->
-  <section class="grid" aria-label="archivos">
-    {#each list as e}
-      <a
-        class="slot panel"
-        class:sel={sel === e}
-        href={e.href}
-        onmouseenter={() => (sel = e)}
-        onfocus={() => (sel = e)}
-      >
-        <span class="glyph">{e.type === 'diario' ? '✎' : '▤'}</span>
-        <span class="stitle">{e.title}</span>
-        <span class="smeta">{e.type} · {e.dateLabel}</span>
-      </a>
-    {/each}
+  <section class="grid" class:isitems={tab === 'items'} aria-label="contenido">
+    {#if tab === 'items'}
+      {#each Array.from({ length: 8 }) as _, i}
+        {@const it = inventory[i]}
+        {#if it}
+          <a
+            class="islot panel"
+            class:sel={sel === it}
+            href={it.url || undefined}
+            target={it.url ? '_blank' : undefined}
+            rel="noopener"
+            onmouseenter={() => (sel = it)}
+            onfocus={() => (sel = it)}
+            aria-label={it.label}
+          >
+            {#if it.cover}
+              <img src={it.cover} alt={it.label} />
+            {:else}
+              <span class="ph">{it.icon ?? '▤'}</span>
+            {/if}
+          </a>
+        {:else}
+          <div class="islot panel empty" aria-hidden="true"></div>
+        {/if}
+      {/each}
+    {:else}
+      {#each list as e}
+        <a
+          class="slot panel"
+          class:sel={sel === e}
+          href={e.href}
+          onmouseenter={() => (sel = e)}
+          onfocus={() => (sel = e)}
+        >
+          <span class="glyph">{e.type === 'diario' ? '✎' : '▤'}</span>
+          <span class="stitle">{e.title}</span>
+          <span class="smeta">{e.type} · {e.dateLabel}</span>
+        </a>
+      {/each}
+    {/if}
   </section>
 
   {#if crt}<Crt />{/if}
@@ -285,16 +324,38 @@
     justify-content: center;
     padding: 8px 12px;
   }
-  .cond,
   .equip,
   .item,
   .namebox,
-  .pfpbox {
+  .pfpbox,
+  .islot {
     background:
       repeating-linear-gradient(0deg, rgba(150, 190, 220, 0.06) 0 1px, transparent 1px 11px),
       repeating-linear-gradient(90deg, rgba(150, 190, 220, 0.06) 0 1px, transparent 1px 14px),
       linear-gradient(180deg, #0c1830, #050b1a);
   }
+
+  /* CONDITION: grilla + glow tintados al color del mood, con respiración */
+  .cond {
+    position: relative;
+    overflow: hidden;
+    background:
+      repeating-linear-gradient(0deg, color-mix(in srgb, var(--c, #4cf05c) 13%, transparent) 0 1px, transparent 1px 11px),
+      repeating-linear-gradient(90deg, color-mix(in srgb, var(--c, #4cf05c) 13%, transparent) 0 1px, transparent 1px 14px),
+      linear-gradient(180deg, #0c1830, #050b1a);
+  }
+  .cond::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background: radial-gradient(130% 160% at 50% 35%, color-mix(in srgb, var(--c, #4cf05c) 34%, transparent), transparent 62%);
+    animation: condbreathe 4.5s ease-in-out infinite;
+  }
+  .cond .ecg,
+  .cond .srow { position: relative; z-index: 1; }
+  @keyframes condbreathe { 0%, 100% { opacity: 0.28; } 50% { opacity: 0.95; } }
   .ecg { width: 100%; height: 34px; }
   .ecg polyline {
     fill: none;
@@ -389,6 +450,32 @@
     outline: none;
   }
 
+  /* ---- items: inventario cuadrado 2 columnas (cabe en pantalla) ---- */
+  .grid.isitems {
+    grid-template-columns: repeat(2, clamp(72px, 34vw, 110px));
+    justify-content: center;
+    align-content: start;
+  }
+  .islot {
+    aspect-ratio: 1;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    text-decoration: none;
+    color: var(--ink);
+    min-width: 0;
+  }
+  .islot img { width: 100%; height: 100%; object-fit: cover; }
+  .islot .ph { color: var(--muted); font-size: 28px; }
+  .islot.empty { opacity: 0.45; }
+  .islot:hover,
+  .islot:focus-visible,
+  .islot.sel {
+    border-color: var(--red);
+    box-shadow: 0 0 10px rgba(255, 74, 61, 0.35);
+    outline: none;
+  }
+
   /* ---- settings (modal estilo RE4) ---- */
   .settings {
     position: fixed;
@@ -448,15 +535,25 @@
   /* ---- desktop: dos columnas ---- */
   @media (min-width: 860px) {
     .menu {
-      grid-template-columns: minmax(280px, 1fr) 1.55fr;
+      grid-template-columns: minmax(320px, 1.5fr) minmax(0, 1fr);
+      grid-template-rows: auto minmax(0, 1fr);
       grid-template-areas:
         'console console'
         'preview grid';
       gap: 12px;
     }
-    .preview { flex-direction: column; position: sticky; top: 12px; }
-    .thumb { width: 100%; height: 200px; }
-    .grid { grid-template-columns: 1fr 1fr; }
+    /* ITEMS: preview ocupa todo a la izq + items pegados a la derecha (sin hueco) */
+    .menu.itemsview { grid-template-columns: minmax(0, 1fr) auto; }
+    .preview { flex-direction: column; align-self: stretch; align-items: stretch; }
+    .thumb { width: 100%; height: auto; flex: 3 1 0; min-height: 0; }  /* item = 3/5 */
+    .info { flex: 2 1 0; min-height: 0; overflow: auto; }              /* descripción = 2/5 */
+    .grid { grid-template-columns: 1fr 1fr; min-height: 0; overflow: auto; }
+    /* lo más grande posible sin scroll (se ajusta al alto disponible) */
+    .grid.isitems {
+      grid-template-columns: repeat(2, clamp(80px, calc((100dvh - 280px) / 4), 180px));
+      justify-content: end;
+      align-content: start;
+    }
   }
 
   /* ---- móvil: portrait horizontal, slots envuelven ---- */
@@ -473,5 +570,6 @@
 
   @media (prefers-reduced-motion: reduce) {
     .ecg polyline { animation: none; stroke-dashoffset: 0; }
+    .cond::after { animation: none; opacity: 0.5; }
   }
 </style>
