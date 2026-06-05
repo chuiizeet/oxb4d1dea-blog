@@ -64,3 +64,19 @@ export async function addRevision(entryId, snapshot, note = null) {
   const s = db();
   await s`insert into revisions (entry_id, snapshot, note) values (${entryId}, ${s.json(snapshot)}, ${note})`;
 }
+
+export async function deleteEntry(id) {
+  await db()`delete from entries where id = ${id}`; // revisions caen en cascada
+}
+
+export async function getRevisions(entryId) {
+  return await db()`
+    select id, created_at, note, snapshot from revisions
+    where entry_id = ${entryId} order by created_at desc`;
+}
+
+export async function addMedia(entryId, kind, url, caption = null) {
+  await db()`
+    insert into media (entry_id, kind, url, caption)
+    values (${entryId}, ${kind}, ${url}, ${caption})`;
+}
