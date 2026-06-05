@@ -1,0 +1,44 @@
+---
+import { getCollection } from 'astro:content';
+import { marked } from 'marked';
+import Base from '../../layouts/Base.astro';
+import ReFileViewer from '../../components/ReFileViewer.svelte';
+
+export async function getStaticPaths() {
+  const all = (await getCollection('diario')).sort(
+    (a, b) => a.data.date.valueOf() - b.data.date.valueOf()
+  );
+  return all.map((entry, i) => ({
+    params: { slug: entry.id },
+    props: { entry, num: i + 1 },
+  }));
+}
+
+const { entry, num } = Astro.props;
+
+// El cuerpo se parte en páginas cortas usando '---' (regla horizontal) como
+// separador. Cada fragmento es una página de texto que se pasa con las flechas.
+const fullHtml = await marked.parse(entry.body ?? '');
+const pages = fullHtml
+  .split(/<hr\s*\/?>/i)
+  .map((s) => s.trim())
+  .filter(Boolean);
+
+const dateStr = entry.data.date.toLocaleDateString('es-ES', {
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric',
+});
+const numStr = String(num).padStart(2, '0');
+---
+
+<Base title={entry.data.title} fullbleed>
+  <ReFileViewer
+    client:load
+    image={entry.data.image ?? ''}
+    pages={pages}
+    title={entry.data.title}
+    num={numStr}
+    date={dateStr}
+  />
+</Base>

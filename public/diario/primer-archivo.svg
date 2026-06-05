@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="820" viewBox="0 0 640 820" role="img" aria-label="Página manuscrita de ejemplo">
+  <rect width="640" height="820" fill="#cdbb97"/>
+  <rect x="0" y="0" width="640" height="820" fill="url(#g)"/>
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#000" stop-opacity="0.04"/>
+      <stop offset="1" stop-color="#000" stop-opacity="0.10"/>
+    </linearGradient>
+  </defs>
+  <!-- líneas de cuaderno -->
+  <g stroke="#9c8a68" stroke-width="1" opacity="0.5">
+    <line x1="48" y1="120" x2="592" y2="120"/>
+    <line x1="48" y1="168" x2="592" y2="168"/>
+    <line x1="48" y1="216" x2="592" y2="216"/>
+    <line x1="48" y1="264" x2="592" y2="264"/>
+    <line x1="48" y1="312" x2="592" y2="312"/>
+    <line x1="48" y1="360" x2="592" y2="360"/>
+    <line x1="48" y1="408" x2="592" y2="408"/>
+    <line x1="48" y1="456" x2="592" y2="456"/>
+    <line x1="48" y1="504" x2="592" y2="504"/>
+    <line x1="48" y1="552" x2="592" y2="552"/>
+    <line x1="48" y1="600" x2="592" y2="600"/>
+    <line x1="48" y1="648" x2="592" y2="648"/>
+  </g>
+  <line x1="96" y1="60" x2="96" y2="760" stroke="#b06a52" stroke-width="1.5" opacity="0.5"/>
+  <!-- "manuscrito" simulado -->
+  <g stroke="#2b2218" stroke-width="2.4" fill="none" stroke-linecap="round" opacity="0.85">
+    <path d="M112 112 q18 -16 34 0 t34 0 t30 -2 q22 4 40 -2 t46 0 t38 -2"/>
+    <path d="M112 160 q22 -14 44 2 t40 -2 q26 6 50 -2 t52 0 t44 -2 t40 2"/>
+    <path d="M112 208 q16 -18 36 0 t36 -2 q24 6 44 0 t40 -2"/>
+    <path d="M112 256 q24 -12 46 2 t48 -2 t46 0 q28 4 52 -2 t44 0 t40 -2"/>
+    <path d="M112 304 q18 -16 38 2 t40 -2 q22 4 42 0 t40 -2 t38 2"/>
+    <path d="M112 352 q22 -14 44 0 t42 -2 t46 2 q26 -6 48 0"/>
+    <path d="M112 400 q20 -16 40 2 t44 -2 t46 0 t44 -2 q24 4 46 0"/>
+    <path d="M112 448 q18 -14 38 2 t40 -2 t42 0"/>
+  </g>
+  <text x="320" y="730" text-anchor="middle" font-family="monospace" font-size="15" fill="#7a6a4a" opacity="0.8">
+    [ placeholder — reemplaza con tu foto ]
+  </text>
+</svg>

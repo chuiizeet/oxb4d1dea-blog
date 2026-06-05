@@ -1,0 +1,53 @@
+---
+import { getCollection, render } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+
+export async function getStaticPaths() {
+  const entries = await getCollection('blog');
+  return entries.map((entry) => ({ params: { slug: entry.id }, props: { entry } }));
+}
+
+const { entry } = Astro.props;
+const { Content } = await render(entry);
+const dateStr = entry.data.date.toLocaleDateString('es-ES', {
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric',
+});
+---
+
+<Base title={entry.data.title}>
+  <article class="post">
+    <a class="back" href="/">← volver</a>
+    <h1>{entry.data.title}</h1>
+    <time>{dateStr}</time>
+    <div class="prose">
+      <Content />
+    </div>
+  </article>
+</Base>
+
+<style>
+  .post {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: clamp(32px, 8vh, 80px) 20px;
+    line-height: 1.7;
+  }
+  .back { font-size: 13px; }
+  h1 {
+    margin: 24px 0 4px;
+    color: var(--amber);
+    letter-spacing: 0.04em;
+  }
+  time { color: var(--muted); font-size: 13px; }
+  .prose { margin-top: 28px; }
+  .prose :global(p) { margin: 0 0 18px; }
+  .prose :global(h2) { margin: 32px 0 12px; color: #e6dcc8; }
+  .prose :global(a) { text-decoration: underline; }
+  .prose :global(code) {
+    background: #1a1510;
+    padding: 1px 6px;
+    border-radius: 3px;
+  }
+</style>

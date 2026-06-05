@@ -1,0 +1,23 @@
+{
+  "name": "0xb4d1dea",
+  "type": "module",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro",
+    "ocr": "node scripts/ocr.mjs"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.100.1",
+    "@astrojs/svelte": "^8.1.2",
+    "astro": "^6.4.4",
+    "marked": "^18.0.5",
+    "svelte": "^5.56.2"
+  },
+  "devDependencies": {
+    "playwright": "^1.60.0"
+  }
+}
