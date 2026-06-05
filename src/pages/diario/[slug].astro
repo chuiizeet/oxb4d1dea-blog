@@ -3,6 +3,7 @@ import { getCollection } from 'astro:content';
 import { marked } from 'marked';
 import Base from '../../layouts/Base.astro';
 import ReFileViewer from '../../components/ReFileViewer.svelte';
+import { diarioImage } from '../../lib/diario.js';
 
 export async function getStaticPaths() {
   const all = (await getCollection('diario')).sort(
@@ -28,6 +29,7 @@ const dateStr = entry.data.date.toLocaleDateString('es-ES', {
   year: 'numeric',
   month: 'long',
   day: 'numeric',
+  timeZone: 'UTC',
 });
 const numStr = String(num).padStart(2, '0');
 ---
@@ -35,7 +37,7 @@ const numStr = String(num).padStart(2, '0');
 <Base title={entry.data.title} fullbleed>
   <ReFileViewer
     client:load
-    image={entry.data.image ?? ''}
+    image={diarioImage(entry.data)}
     pages={pages}
     title={entry.data.title}
     num={numStr}

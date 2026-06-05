@@ -1,6 +1,7 @@
 <script>
   import { onMount } from 'svelte';
   import Crt from './Crt.svelte';
+  import { CONDITIONS } from '../lib/conditions.js';
 
   let {
     entries = [],
@@ -17,6 +18,19 @@
   let sel = $state(entries.find((e) => e.type === 'diario') ?? entries[0] ?? null);
   $effect(() => {
     sel = list[0] ?? null;
+  });
+
+  // entradas (diario/blog) agrupadas por mes; list ya viene ordenado por fecha desc
+  let grouped = $derived.by(() => {
+    if (tab === 'items') return [];
+    const groups = [];
+    for (const e of list) {
+      const key = e.monthLabel ?? '';
+      const last = groups[groups.length - 1];
+      if (last && last.key === key) last.items.push(e);
+      else groups.push({ key, items: [e] });
+    }
+    return groups;
   });
 
   const tabs = [
@@ -39,18 +53,6 @@
     } catch (e) {}
   });
 
-  // estados tipo RE2 + estados de ánimo propios. Cada uno: color, velocidad y
-  // forma de onda del ECG. (pathLength=100 normaliza el "dibujado" de la línea.)
-  const CONDITIONS = {
-    fine:    { label: 'FINE',    color: '#4cf05c', dur: 2.4, points: '0,22 58,22 70,22 78,9 86,35 94,22 128,22 136,9 144,35 152,22 200,22' },
-    caution: { label: 'CAUTION', color: '#ffd23c', dur: 1.8, points: '0,22 40,22 48,12 54,30 60,16 66,26 72,22 110,22 120,10 126,32 132,18 138,24 144,22 200,22' },
-    danger:  { label: 'DANGER',  color: '#ff4a3d', dur: 1.1, points: '0,22 26,22 32,5 38,39 44,8 50,38 56,22 88,22 94,6 100,40 106,9 112,37 118,22 158,22 166,8 174,36 182,22 200,22' },
-    poison:  { label: 'POISON',  color: '#b06cff', dur: 2.6, points: '0,22 20,14 40,30 60,12 80,32 100,14 120,30 140,12 160,32 180,16 200,22' },
-    sadness: { label: 'SADNESS', color: '#5a93d6', dur: 3.8, points: '0,24 56,24 86,24 96,28 106,22 116,27 128,24 160,25 200,26' },
-    tired:   { label: 'TIRED',   color: '#45cdff', dur: 3.2, points: '0,23 70,23 82,18 90,27 98,23 150,23 162,19 170,26 178,23 200,23' },
-    hyped:   { label: 'HYPED',   color: '#ffae3c', dur: 0.95, points: '0,22 24,22 30,7 36,37 42,11 48,33 54,22 78,22 84,7 90,37 96,11 102,33 108,22 132,22 138,7 144,37 150,22 200,22' },
-    calm:    { label: 'CALM',    color: '#44e0d0', dur: 3.0, points: '0,22 30,20 60,24 90,20 120,24 150,20 180,24 200,22' },
-  };
   let cond = $derived(CONDITIONS[condition] ?? CONDITIONS.fine);
 </script>
 
@@ -168,18 +170,28 @@
         {/if}
       {/each}
     {:else}
-      {#each list as e}
-        <a
-          class="slot panel"
-          class:sel={sel === e}
-          href={e.href}
-          onmouseenter={() => (sel = e)}
-          onfocus={() => (sel = e)}
-        >
-          <span class="glyph">{e.type === 'diario' ? '✎' : '▤'}</span>
-          <span class="stitle">{e.title}</span>
-          <span class="smeta">{e.type} · {e.dateLabel}</span>
-        </a>
+      {#each grouped as g}
+        <div class="monthsep">{g.key}</div>
+        {#each g.items as e}
+          <a
+            class="slot panel"
+            class:sel={sel === e}
+            style={e.moodColor ? `--m: ${e.moodColor}` : ''}
+            href={e.href}
+            onmouseenter={() => (sel = e)}
+            onfocus={() => (sel = e)}
+          >
+            <span class="glyph">
+              {#if e.image}
+                <img src={e.image} alt="" loading="lazy" />
+              {:else}
+                {e.type === 'diario' ? '✎' : '▤'}
+              {/if}
+            </span>
+            <span class="stitle">{e.title}</span>
+            <span class="smeta">{e.type} · {e.dateLabel}</span>
+          </a>
+        {/each}
       {/each}
     {/if}
   </section>
@@ -429,17 +441,52 @@
     gap: 8px;
     align-content: start;
   }
+  /* separador de mes (entradas diario/blog) */
+  .monthsep {
+    color: var(--green);
+    font-size: 11px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    padding: 8px 2px 3px;
+    margin-top: 6px;
+    border-bottom: 1px solid rgba(150, 190, 220, 0.18);
+    text-shadow: 0 0 6px rgba(76, 240, 92, 0.3);
+  }
+  .monthsep:first-child { margin-top: 0; }
   .slot {
+    position: relative;
+    overflow: hidden;
     display: grid;
-    grid-template-columns: 28px 1fr auto;
+    grid-template-columns: 36px 1fr auto;
     align-items: center;
-    gap: 10px;
-    padding: 12px 14px;
+    gap: 12px;
+    padding: 10px 14px;
     text-decoration: none;
     color: var(--ink);
-    min-height: 56px;
+    min-height: 58px;
   }
-  .slot .glyph { color: var(--muted); font-size: 18px; text-align: center; }
+  /* gradiente del mood (entradas del diario) */
+  .slot::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background: linear-gradient(90deg, color-mix(in srgb, var(--m, transparent) 42%, transparent), transparent 62%);
+  }
+  .slot > * { position: relative; z-index: 1; }
+  .slot .glyph {
+    width: 36px;
+    height: 36px;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    color: var(--muted);
+    font-size: 16px;
+    background: #0c1430;
+    border: 1px solid var(--lo);
+  }
+  .slot .glyph img { width: 100%; height: 100%; object-fit: cover; }
   .slot .stitle { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .slot .smeta { color: var(--muted); font-size: 11px; letter-spacing: 0.06em; }
   .slot:hover,
@@ -547,7 +594,7 @@
     .preview { flex-direction: column; align-self: stretch; align-items: stretch; }
     .thumb { width: 100%; height: auto; flex: 3 1 0; min-height: 0; }  /* item = 3/5 */
     .info { flex: 2 1 0; min-height: 0; overflow: auto; }              /* descripción = 2/5 */
-    .grid { grid-template-columns: 1fr 1fr; min-height: 0; overflow: auto; }
+    .grid { grid-template-columns: 1fr; min-height: 0; overflow: auto; }
     /* lo más grande posible sin scroll (se ajusta al alto disponible) */
     .grid.isitems {
       grid-template-columns: repeat(2, clamp(80px, calc((100dvh - 280px) / 4), 180px));

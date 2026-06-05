@@ -9,7 +9,8 @@ const diario = defineCollection({
     title: z.string(),
     date: z.coerce.date(),
     tags: z.array(z.string()).default([]),
-    image: z.string().optional(),
+    image: z.string().optional(), // ruta explícita (override)
+    exfile: z.coerce.number().int().min(1).max(16).optional(), // EX file 1–16 (default 1)
     mood: z.string().optional(),
   }),
 });

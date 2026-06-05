@@ -3,7 +3,7 @@ title: Primer archivo
 date: 2026-05-30
 tags: [diario]
 mood: tired
-image: /diario/og-ejemplo.png
+# sin image ni exfile -> default EX file 01. Para elegir otra: exfile: 3 (1–16)
 ---
 
 Hoy decidí empezar a llevar esto en serio. Hay algo en escribir a mano que se
