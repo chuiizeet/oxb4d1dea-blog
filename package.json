@@ -7,8 +7,12 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
+    "start": "node ./dist/server/entry.mjs",
     "astro": "astro",
     "ocr": "node scripts/ocr.mjs"
+  },
+  "engines": {
+    "node": ">=20.19"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.100.1",

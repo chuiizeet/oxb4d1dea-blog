@@ -1,0 +1,40 @@
+# DigitalOcean App Platform — spec del sitio (Astro SSR + Supabase).
+# Los VALORES de las variables NO van aquí (son secretos): se ponen en el panel
+# de DO (App -> Settings -> el componente "web" -> Environment Variables) o con doctl.
+name: oxb4d1dea-blog
+region: sfo
+services:
+  - name: web
+    github:
+      repo: chuiizeet/oxb4d1dea-blog
+      branch: main
+      deploy_on_push: true
+    environment_slug: node-js
+    build_command: npm ci && npm run build
+    run_command: node ./dist/server/entry.mjs
+    instance_size_slug: apps-s-1vcpu-0.5gb
+    instance_count: 1
+    http_port: 8080
+    envs:
+      - key: HOST
+        value: "0.0.0.0"
+        scope: RUN_TIME
+      # Postgres (Supabase pooler) — SECRETO
+      - key: DATABASE_URL
+        scope: RUN_TIME
+        type: SECRET
+      # Supabase (anon/url se usan también en build)
+      - key: PUBLIC_SUPABASE_URL
+        scope: RUN_AND_BUILD_TIME
+      - key: PUBLIC_SUPABASE_ANON_KEY
+        scope: RUN_AND_BUILD_TIME
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        scope: RUN_TIME
+        type: SECRET
+      # Editor (login) — SECRETOS
+      - key: EDITOR_PASSWORD
+        scope: RUN_TIME
+        type: SECRET
+      - key: SESSION_SECRET
+        scope: RUN_TIME
+        type: SECRET
