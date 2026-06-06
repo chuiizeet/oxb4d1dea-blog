@@ -1,51 +1,54 @@
 <script>
   import { onMount } from 'svelte';
 
-  let showWarn = $state(false);
-  let showSys = $state(false);
-  let showTerm = $state(false);
-  let sysLines = $state([]);
+  let showProgram = $state(false);
+  let showCd = $state(false);
+  let showKbd = $state(false);
+  let ready = $state(false);
+  let dots = $state('');
   let pw = $state('');
   let phase = $state('idle'); // idle | checking | granted | denied
   let termMsg = $state('');
   let clock = $state('');
   let input;
 
-  const BOOT = [
-    'UMBRELLA OS  [Versión 4.9.8]',
-    '(C) Umbrella Corp.  Acceso restringido.',
-    '> Iniciando núcleo .............. OK',
-    '> Módulo de seguridad ........... OK',
-    '> Contención T-Virus ............ ESTABLE',
-    '> Conexión al mainframe ......... OK',
-    '> Esperando autenticación...',
+  const ROWS = [
+    ['ESC', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', '⌫'],
+    ['I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', '↵'],
+    ['R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'],
   ];
 
   function tick() {
     clock = new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
   }
 
-  function typeBoot(i) {
-    if (i >= BOOT.length) return;
-    sysLines = [...sysLines, BOOT[i]];
-    setTimeout(() => typeBoot(i + 1), 260);
-  }
-
   onMount(() => {
     tick();
     const ci = setInterval(tick, 10000);
     const t = [];
-    t.push(setTimeout(() => (showWarn = true), 350));
-    t.push(setTimeout(() => { showSys = true; typeBoot(0); }, 1200));
-    t.push(setTimeout(() => { showTerm = true; input?.focus(); }, 2700));
-    return () => { clearInterval(ci); t.forEach(clearTimeout); };
+    t.push(setTimeout(() => (showProgram = true), 300));
+    t.push(setTimeout(() => (showCd = true), 950));
+    t.push(setTimeout(() => (showKbd = true), 1500));
+    let n = 0;
+    const di = setInterval(() => { n = (n % 5) + 1; dots = '.'.repeat(n); }, 220);
+    t.push(setTimeout(() => { clearInterval(di); dots = '.....'; ready = true; input?.focus(); }, 1900));
+    return () => { clearInterval(ci); clearInterval(di); t.forEach(clearTimeout); };
   });
+
+  function key(k) {
+    if (phase === 'checking' || phase === 'granted') return;
+    if (k === 'ESC') { pw = ''; }
+    else if (k === '⌫') { pw = pw.slice(0, -1); }
+    else if (k === '↵') { submit(); return; }
+    else { pw += k.toLowerCase(); }
+    input?.focus();
+  }
 
   async function submit(e) {
     e?.preventDefault();
     if (phase === 'checking' || phase === 'granted') return;
     phase = 'checking';
-    termMsg = 'verificando credenciales...';
+    termMsg = 'ACCESSING...';
     try {
       const res = await fetch('/api/login', {
         method: 'POST',
@@ -67,60 +70,81 @@
       }
     } catch {
       phase = 'denied';
-      termMsg = 'ERROR DE CONEXIÓN';
+      termMsg = 'CONNECTION ERROR';
     }
   }
 </script>
 
 <div class="desktop">
-  <div class="watermark" aria-hidden="true"><span class="umb wm"></span></div>
-
-  {#if showWarn}
-    <div class="win warn">
-      <div class="tb red"><span class="tbi">⚠</span><span class="tt">Advertencia de bioseguridad</span><button class="x" onclick={() => (showWarn = false)}>✕</button></div>
-      <div class="body warnbody">
-        <span class="umb big"></span>
-        <p>Brecha detectada en el Sector&nbsp;4.<br />Contención del <b>T-Virus</b>: activa.<br />Se requiere autenticación.</p>
-      </div>
-      <div class="btns"><button class="btn" onclick={() => (showWarn = false)}>Aceptar</button></div>
-    </div>
-  {/if}
-
-  {#if showSys}
-    <div class="win sys">
-      <div class="tb"><span class="tbi">▤</span><span class="tt">SYSTEM.LOG</span><button class="x" onclick={() => (showSys = false)}>✕</button></div>
-      <div class="body term small">
-        {#each sysLines as l}<div class="ln">{l}</div>{/each}
-      </div>
-    </div>
-  {/if}
-
-  {#if showTerm}
-    <div class="win termwin" class:shake={phase === 'denied'}>
-      <div class="tb red"><span class="tbi">▣</span><span class="tt">UMBRELLA — TERMINAL</span><button class="x">✕</button></div>
-      <div class="body term">
-        <div class="ln dim">MAINFRAME — ACCESO RESTRINGIDO</div>
-        <div class="ln">login: <span class="user">chuy</span></div>
-        <form onsubmit={submit} class="pwline">
-          <span>password:&nbsp;</span>
-          <input
-            bind:this={input}
-            bind:value={pw}
-            type="password"
-            autocomplete="current-password"
-            spellcheck="false"
-            disabled={phase === 'checking' || phase === 'granted'}
-          />
-        </form>
-        {#if termMsg}
-          <div class="ln msg" class:ok={phase === 'granted'} class:bad={phase === 'denied'}>&gt; {termMsg}</div>
+  {#if showProgram}
+    <div class="win program" class:shake={phase === 'denied'}>
+      <div class="tb"><span class="cnr"></span><span class="ttl">PROGRAM ( 1:1 )</span><span class="cnr"></span></div>
+      <div class="body screen">
+        <div class="ln big">UMBRELLA "RODEM" SYSTEM<span class="ver">Ver 5.0</span></div>
+        <div class="ln big">Culture Experiment Room Staff Registry.</div>
+        <div class="ln sp"></div>
+        <div class="ln big">Accessing{dots}</div>
+        {#if ready}
+          <div class="ln sp"></div>
+          <div class="ln big">Enter your user name.</div>
+          <div class="ln big">&gt;<span class="user">chuy</span></div>
+          <div class="ln sp"></div>
+          <div class="ln big">Enter password.</div>
+          <form onsubmit={submit} class="pwline">
+            <span class="prompt">&gt;</span>
+            <input
+              bind:this={input}
+              bind:value={pw}
+              type="password"
+              autocomplete="current-password"
+              spellcheck="false"
+              disabled={phase === 'checking' || phase === 'granted'}
+            />
+          </form>
+          {#if termMsg}
+            <div class="ln big msg" class:ok={phase === 'granted'} class:bad={phase === 'denied'}>{termMsg}</div>
+          {/if}
         {/if}
       </div>
     </div>
   {/if}
 
+  {#if showCd}
+    <div class="win cd">
+      <div class="tb"><span class="cnr"></span><span class="ttl">repeat cdsystem</span><span class="cnr"></span></div>
+      <div class="body cdbody">
+        <img class="cover" src="/login_bg_mobile.png" alt="" />
+        <div class="cdinfo">
+          <div class="counter">77 <span>52</span></div>
+          <div class="toc">the queen is dead</div>
+          <div class="bars">
+            <div class="bar"><i class="r"></i></div>
+            <div class="bar"><i class="y"></i></div>
+            <div class="bar"><i class="m"></i></div>
+          </div>
+          <button class="repeat" type="button">repeat</button>
+        </div>
+      </div>
+    </div>
+  {/if}
+
+  {#if showKbd}
+    <div class="win keyboard">
+      <div class="tb"><span class="cnr"></span><span class="ttl">KEYBOARD ( 1:1 )</span><span class="cnr"></span></div>
+      <div class="body kb">
+        {#each ROWS as row}
+          <div class="krow">
+            {#each row as k}
+              <button class="key" class:wide={k.length > 1} onclick={() => key(k)}>{k}</button>
+            {/each}
+          </div>
+        {/each}
+      </div>
+    </div>
+  {/if}
+
   <div class="taskbar">
-    <button class="start"><span class="umb sm"></span> Inicio</button>
+    <button class="file">▣ File</button>
     <div class="tray">{clock}</div>
   </div>
 </div>
@@ -129,47 +153,37 @@
   .desktop {
     position: fixed;
     inset: 0;
-    background: #0a6b62;
-    overflow: hidden;
+    overflow: auto;
+    background: #14201a url('/login_bg_mobile.png') center / cover no-repeat;
+    image-rendering: pixelated;
     font-family: Tahoma, 'MS Sans Serif', system-ui, sans-serif;
   }
-  /* scanlines sutiles */
+  @media (min-width: 700px) {
+    .desktop { background-image: url('/login_bg_desktop.png'); }
+  }
   .desktop::after {
     content: '';
-    position: absolute;
+    position: fixed;
     inset: 0;
     pointer-events: none;
-    background: repeating-linear-gradient(rgba(0, 0, 0, 0.16) 0 1px, transparent 1px 3px);
+    background: repeating-linear-gradient(rgba(0, 0, 0, 0.14) 0 1px, transparent 1px 3px);
     opacity: 0.5;
   }
-  .watermark { position: absolute; inset: 0; display: grid; place-items: center; }
-  .umb {
-    aspect-ratio: 1;
-    background: conic-gradient(
-      #d11 0 45deg, #fff 45deg 90deg, #d11 90deg 135deg, #fff 135deg 180deg,
-      #d11 180deg 225deg, #fff 225deg 270deg, #d11 270deg 315deg, #fff 315deg 360deg
-    );
-    clip-path: polygon(30% 0, 70% 0, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0 70%, 0 30%);
-  }
-  .umb.wm { width: min(60vmin, 460px); opacity: 0.06; }
-  .umb.big { width: 42px; flex: 0 0 auto; }
-  .umb.sm { width: 16px; display: inline-block; vertical-align: middle; }
 
   .win {
     position: absolute;
-    width: min(380px, 88vw);
-    background: #c3c3c3;
+    background: #c8c8c0;
     border: 2px solid;
-    border-color: #fdfdfd #6f6f6f #6f6f6f #fdfdfd;
-    box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.45);
-    color: #000;
+    border-color: #f4f4ee #6f6f68 #6f6f68 #f4f4ee;
+    box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.55);
+    color: #1a1a14;
     animation: pop 0.16s ease-out;
     z-index: 10;
   }
-  .win.warn { left: 8%; top: 13%; }
-  .win.sys { left: 26%; top: 28%; z-index: 12; }
-  .win.termwin { left: 34%; top: 45%; width: min(440px, 92vw); z-index: 20; }
-  @keyframes pop { from { transform: scale(0.93); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  .program { left: 5%; top: 7%; width: min(560px, 92vw); z-index: 20; }
+  .cd { left: 60%; top: 16%; width: min(250px, 84vw); z-index: 24; }
+  .keyboard { left: 12%; top: 55%; width: min(640px, 94vw); z-index: 22; }
+  @keyframes pop { from { transform: scale(0.94); opacity: 0; } to { transform: scale(1); opacity: 1; } }
   .win.shake { animation: shake 0.36s; }
   @keyframes shake {
     0%, 100% { transform: translateX(0); }
@@ -177,76 +191,72 @@
     40%, 80% { transform: translateX(6px); }
   }
 
-  .tb {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    background: linear-gradient(90deg, #00007b, #1287d8);
-    color: #fff;
-    font-size: 12px;
-    font-weight: bold;
-    padding: 3px 4px;
-    user-select: none;
-  }
-  .tb.red { background: linear-gradient(90deg, #6e0000, #c81e1e); }
-  .tt { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .tbi { font-size: 12px; }
-  .x {
-    margin-left: auto;
-    width: 18px; height: 16px;
-    background: #c3c3c3;
-    border: 1px solid; border-color: #fff #6f6f6f #6f6f6f #fff;
-    color: #000; font-size: 9px; line-height: 1; cursor: pointer;
-    flex: 0 0 auto;
-  }
-  .body { padding: 12px; font-size: 12px; }
-  .warnbody { display: flex; gap: 12px; align-items: center; line-height: 1.5; }
-  .warnbody p { margin: 0; }
-  .btns { display: flex; justify-content: center; padding: 0 12px 12px; }
-  .btn, .start {
-    background: #c3c3c3;
-    border: 2px solid; border-color: #fff #6f6f6f #6f6f6f #fff;
-    padding: 3px 14px; font: inherit; font-size: 12px; cursor: pointer;
-  }
-  .btn:active, .start:active { border-color: #6f6f6f #fff #fff #6f6f6f; }
+  .tb { display: flex; align-items: center; gap: 6px; padding: 2px 3px; border-bottom: 1px solid #6f6f68; }
+  .cnr { width: 13px; height: 11px; flex: 0 0 auto; background: #c8c8c0; border: 1px solid; border-color: #f4f4ee #6f6f68 #6f6f68 #f4f4ee; }
+  .ttl { flex: 1; text-align: center; font-size: 12px; font-weight: bold; letter-spacing: 0.06em; color: #222; }
+  .body { padding: 10px; font-size: 12px; }
 
-  .term {
-    background: #040804;
-    color: #46f08a;
+  /* terminal RODEM: el álbum se ve detrás, atenuado */
+  .screen {
+    background: rgba(8, 16, 10, 0.55);
+    color: #dfe9d6;
     font-family: ui-monospace, 'Courier New', monospace;
+    padding: 12px 14px;
   }
-  .term.small { font-size: 11px; max-height: 116px; overflow: auto; color: #74e6a0; }
-  .term .ln { white-space: pre-wrap; line-height: 1.55; }
-  .term .dim { color: #2c9c5e; }
-  .term .user { color: #9dffc1; }
+  .screen .ln { line-height: 1.5; white-space: pre-wrap; letter-spacing: 0.06em; }
+  .screen .big { font-weight: bold; }
+  .screen .ln.sp { height: 8px; }
+  .ver { float: right; }
+  .user { color: #7CFC9A; }
   .pwline { display: flex; align-items: center; }
-  .pwline input {
-    flex: 1; min-width: 0;
-    background: transparent; border: none; outline: none;
-    color: #46f08a; font: inherit; caret-color: #46f08a;
-  }
-  .msg { margin-top: 6px; font-weight: bold; }
+  .prompt { font-weight: bold; }
+  .pwline input { flex: 1; min-width: 0; background: transparent; border: none; outline: none; color: #7CFC9A; font: inherit; letter-spacing: 0.2em; caret-color: #7CFC9A; }
+  .msg { margin-top: 8px; }
   .msg.ok { color: #5bff8f; text-shadow: 0 0 10px #46f08a; }
-  .msg.bad { color: #ff5a4a; text-shadow: 0 0 10px #ff5a4a; }
+  .msg.bad { color: #ff6a5a; text-shadow: 0 0 10px #ff5a4a; }
+
+  /* cdsystem */
+  .cdbody { display: flex; gap: 10px; }
+  .cover { width: 74px; height: 74px; object-fit: cover; image-rendering: pixelated; border: 1px solid #6f6f68; flex: 0 0 auto; }
+  .cdinfo { flex: 1; min-width: 0; }
+  .counter { font-family: ui-monospace, monospace; font-size: 18px; color: #2a8f2a; font-weight: bold; }
+  .counter span { color: #2a8f2a; opacity: 0.7; }
+  .toc { font-style: italic; font-size: 12px; margin: 2px 0 6px; color: #333; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .bars { display: flex; flex-direction: column; gap: 3px; }
+  .bar { height: 9px; background: #3a3a34; border: 1px solid #6f6f68; }
+  .bar i { display: block; height: 100%; }
+  .bar i.r { background: #d11; width: 70%; animation: eqA 1.4s ease-in-out infinite alternate; }
+  .bar i.y { background: #c9c20e; width: 45%; animation: eqB 1.1s ease-in-out infinite alternate; }
+  .bar i.m { background: #c11ac1; width: 85%; animation: eqC 1.7s ease-in-out infinite alternate; }
+  @keyframes eqA { to { width: 38%; } }
+  @keyframes eqB { to { width: 82%; } }
+  @keyframes eqC { to { width: 52%; } }
+  .repeat { margin-top: 8px; background: #c8c8c0; border: 2px solid; border-color: #f4f4ee #6f6f68 #6f6f68 #f4f4ee; padding: 2px 12px; font: inherit; font-size: 12px; cursor: pointer; }
+
+  /* teclado en pantalla */
+  .kb { display: flex; flex-direction: column; gap: 5px; }
+  .krow { display: flex; gap: 5px; justify-content: center; }
+  .key {
+    flex: 1; min-width: 0;
+    aspect-ratio: 1 / 0.78;
+    background: #c8c8c0;
+    border: 2px solid; border-color: #f4f4ee #6f6f68 #6f6f68 #f4f4ee;
+    font: inherit; font-size: 15px; font-weight: bold; color: #2a2a22; cursor: pointer;
+  }
+  .key.wide { flex: 1.4; font-size: 11px; }
+  .key:active { border-color: #6f6f68 #f4f4ee #f4f4ee #6f6f68; }
 
   .taskbar {
-    position: absolute;
-    left: 0; right: 0; bottom: 0;
-    height: 32px;
+    position: fixed; left: 0; right: 0; bottom: 0; height: 30px;
     display: flex; align-items: center; justify-content: space-between;
-    background: #c3c3c3;
-    border-top: 2px solid #fdfdfd;
-    padding: 0 5px;
-    z-index: 50;
+    background: #c8c8c0; border-top: 2px solid #f4f4ee; padding: 0 5px; z-index: 50;
   }
-  .start { display: inline-flex; align-items: center; gap: 6px; font-weight: bold; }
-  .tray {
-    border: 1px solid; border-color: #6f6f6f #fff #fff #6f6f6f;
-    padding: 3px 12px; font-size: 12px;
-  }
+  .file { background: #c8c8c0; border: 2px solid; border-color: #f4f4ee #6f6f68 #6f6f68 #f4f4ee; padding: 3px 12px; font: inherit; font-size: 12px; font-weight: bold; cursor: pointer; }
+  .tray { border: 1px solid; border-color: #6f6f68 #fff #fff #6f6f68; padding: 3px 12px; font-size: 12px; }
 
-  @media (max-width: 620px) {
-    .desktop { display: flex; flex-direction: column; gap: 10px; padding: 12px 0 42px; align-items: center; }
-    .win { position: static; width: 92vw; }
+  @media (max-width: 700px) {
+    .desktop { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 12px 0 44px; }
+    .win { position: static; width: 94vw; }
+    .keyboard { display: none; } /* en móvil se usa el teclado nativo tocando el campo */
   }
 </style>
