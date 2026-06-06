@@ -78,7 +78,7 @@
 <div class="desktop">
   {#if showProgram}
     <div class="win program" class:shake={phase === 'denied'}>
-      <div class="tb"><span class="cnr"></span><span class="ttl">PROGRAM ( 1:1 )</span><span class="cnr"></span></div>
+      <div class="tb"><span class="ttl">PROGRAM ( 1:1 )</span><span class="wbtns"><span class="wb">_</span><span class="wb">▢</span><span class="wb x">✕</span></span></div>
       <div class="body screen">
         <div class="ln big">UMBRELLA "RODEM" SYSTEM<span class="ver">Ver 5.0</span></div>
         <div class="ln big">Culture Experiment Room Staff Registry.</div>
@@ -111,7 +111,7 @@
 
   {#if showCd}
     <div class="win cd">
-      <div class="tb"><span class="cnr"></span><span class="ttl">repeat cdsystem</span><span class="cnr"></span></div>
+      <div class="tb"><span class="ttl">repeat cdsystem</span><span class="wbtns"><span class="wb">_</span><span class="wb">▢</span><span class="wb x" onclick={() => (showCd = false)}>✕</span></span></div>
       <div class="body cdbody">
         <img class="cover" src="/login_bg_mobile.png" alt="" />
         <div class="cdinfo">
@@ -130,7 +130,7 @@
 
   {#if showKbd}
     <div class="win keyboard">
-      <div class="tb"><span class="cnr"></span><span class="ttl">KEYBOARD ( 1:1 )</span><span class="cnr"></span></div>
+      <div class="tb"><span class="ttl">KEYBOARD ( 1:1 )</span><span class="wbtns"><span class="wb">_</span><span class="wb">▢</span><span class="wb x" onclick={() => (showKbd = false)}>✕</span></span></div>
       <div class="body kb">
         {#each ROWS as row}
           <div class="krow">
@@ -151,6 +151,14 @@
 
 <style>
   .desktop {
+    /* paleta Windows 2000 */
+    --face: #d4d0c8;
+    --hl: #ffffff;
+    --sh: #808080;
+    --dk: #404040;
+    --blue1: #0a246a;
+    --blue2: #a6caf0;
+
     position: fixed;
     inset: 0;
     overflow: auto;
@@ -172,17 +180,17 @@
 
   .win {
     position: absolute;
-    background: #c8c8c0;
+    background: var(--face);
     border: 2px solid;
-    border-color: #f4f4ee #6f6f68 #6f6f68 #f4f4ee;
-    box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.55);
+    border-color: var(--hl) var(--dk) var(--dk) var(--hl);
+    box-shadow: inset -1px -1px 0 var(--sh), inset 1px 1px 0 var(--face), 2px 2px 6px rgba(0, 0, 0, 0.55);
     color: #1a1a14;
     animation: pop 0.16s ease-out;
     z-index: 10;
   }
-  .program { left: 5%; top: 7%; width: min(560px, 92vw); z-index: 20; }
-  .cd { left: 60%; top: 16%; width: min(250px, 84vw); z-index: 24; }
-  .keyboard { left: 12%; top: 55%; width: min(640px, 94vw); z-index: 22; }
+  .program { left: 4%; top: 6%; width: min(700px, 94vw); z-index: 20; }
+  .cd { left: 62%; top: 13%; width: min(330px, 88vw); z-index: 24; }
+  .keyboard { left: 9%; top: 53%; width: min(820px, 96vw); z-index: 22; }
   @keyframes pop { from { transform: scale(0.94); opacity: 0; } to { transform: scale(1); opacity: 1; } }
   .win.shake { animation: shake 0.36s; }
   @keyframes shake {
@@ -191,39 +199,53 @@
     40%, 80% { transform: translateX(6px); }
   }
 
-  .tb { display: flex; align-items: center; gap: 6px; padding: 2px 3px; border-bottom: 1px solid #6f6f68; }
-  .cnr { width: 13px; height: 11px; flex: 0 0 auto; background: #c8c8c0; border: 1px solid; border-color: #f4f4ee #6f6f68 #6f6f68 #f4f4ee; }
-  .ttl { flex: 1; text-align: center; font-size: 12px; font-weight: bold; letter-spacing: 0.06em; color: #222; }
-  .body { padding: 10px; font-size: 12px; }
+  .tb {
+    display: flex; align-items: center; gap: 4px;
+    padding: 2px 2px 2px 6px;
+    background: linear-gradient(90deg, var(--blue1), var(--blue2));
+  }
+  .ttl { flex: 1; font-size: 13px; font-weight: bold; color: #fff; letter-spacing: 0.02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: 0 1px 0 rgba(0, 0, 0, 0.3); }
+  .wbtns { display: flex; gap: 2px; flex: 0 0 auto; }
+  .wb {
+    width: 19px; height: 17px;
+    display: grid; place-items: center;
+    font-size: 11px; line-height: 1; color: #000;
+    background: var(--face);
+    border: 1px solid; border-color: var(--hl) var(--dk) var(--dk) var(--hl);
+    box-shadow: inset -1px -1px 0 var(--sh);
+  }
+  .wb.x { cursor: pointer; }
+
+  .body { padding: 12px; font-size: 13px; }
 
   /* terminal RODEM: el álbum se ve detrás, atenuado */
   .screen {
     background: rgba(8, 16, 10, 0.55);
     color: #dfe9d6;
     font-family: ui-monospace, 'Courier New', monospace;
-    padding: 12px 14px;
+    padding: 14px 16px;
   }
-  .screen .ln { line-height: 1.5; white-space: pre-wrap; letter-spacing: 0.06em; }
+  .screen .ln { line-height: 1.55; white-space: pre-wrap; letter-spacing: 0.06em; }
   .screen .big { font-weight: bold; }
-  .screen .ln.sp { height: 8px; }
+  .screen .ln.sp { height: 9px; }
   .ver { float: right; }
-  .user { color: #7CFC9A; }
+  .user { color: #7cfc9a; }
   .pwline { display: flex; align-items: center; }
   .prompt { font-weight: bold; }
-  .pwline input { flex: 1; min-width: 0; background: transparent; border: none; outline: none; color: #7CFC9A; font: inherit; letter-spacing: 0.2em; caret-color: #7CFC9A; }
+  .pwline input { flex: 1; min-width: 0; background: transparent; border: none; outline: none; color: #7cfc9a; font: inherit; letter-spacing: 0.2em; caret-color: #7cfc9a; }
   .msg { margin-top: 8px; }
   .msg.ok { color: #5bff8f; text-shadow: 0 0 10px #46f08a; }
   .msg.bad { color: #ff6a5a; text-shadow: 0 0 10px #ff5a4a; }
 
   /* cdsystem */
-  .cdbody { display: flex; gap: 10px; }
-  .cover { width: 74px; height: 74px; object-fit: cover; image-rendering: pixelated; border: 1px solid #6f6f68; flex: 0 0 auto; }
+  .cdbody { display: flex; gap: 12px; }
+  .cover { width: 92px; height: 92px; object-fit: cover; image-rendering: pixelated; border: 1px solid var(--sh); flex: 0 0 auto; }
   .cdinfo { flex: 1; min-width: 0; }
-  .counter { font-family: ui-monospace, monospace; font-size: 18px; color: #2a8f2a; font-weight: bold; }
-  .counter span { color: #2a8f2a; opacity: 0.7; }
-  .toc { font-style: italic; font-size: 12px; margin: 2px 0 6px; color: #333; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .bars { display: flex; flex-direction: column; gap: 3px; }
-  .bar { height: 9px; background: #3a3a34; border: 1px solid #6f6f68; }
+  .counter { font-family: ui-monospace, monospace; font-size: 22px; color: #1f8a1f; font-weight: bold; }
+  .counter span { opacity: 0.7; }
+  .toc { font-style: italic; font-size: 13px; margin: 3px 0 8px; color: #333; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .bars { display: flex; flex-direction: column; gap: 4px; }
+  .bar { height: 11px; background: #3a3a34; border: 1px solid var(--sh); }
   .bar i { display: block; height: 100%; }
   .bar i.r { background: #d11; width: 70%; animation: eqA 1.4s ease-in-out infinite alternate; }
   .bar i.y { background: #c9c20e; width: 45%; animation: eqB 1.1s ease-in-out infinite alternate; }
@@ -231,32 +253,40 @@
   @keyframes eqA { to { width: 38%; } }
   @keyframes eqB { to { width: 82%; } }
   @keyframes eqC { to { width: 52%; } }
-  .repeat { margin-top: 8px; background: #c8c8c0; border: 2px solid; border-color: #f4f4ee #6f6f68 #6f6f68 #f4f4ee; padding: 2px 12px; font: inherit; font-size: 12px; cursor: pointer; }
+  .repeat {
+    margin-top: 10px; background: var(--face); font: inherit; font-size: 13px; padding: 3px 14px; cursor: pointer;
+    border: 1px solid; border-color: var(--hl) var(--dk) var(--dk) var(--hl); box-shadow: inset -1px -1px 0 var(--sh);
+  }
+  .repeat:active { border-color: var(--dk) var(--hl) var(--hl) var(--dk); box-shadow: inset 1px 1px 0 var(--sh); }
 
   /* teclado en pantalla */
-  .kb { display: flex; flex-direction: column; gap: 5px; }
-  .krow { display: flex; gap: 5px; justify-content: center; }
+  .kb { display: flex; flex-direction: column; gap: 6px; padding: 14px; }
+  .krow { display: flex; gap: 6px; justify-content: center; }
   .key {
     flex: 1; min-width: 0;
-    aspect-ratio: 1 / 0.78;
-    background: #c8c8c0;
-    border: 2px solid; border-color: #f4f4ee #6f6f68 #6f6f68 #f4f4ee;
-    font: inherit; font-size: 15px; font-weight: bold; color: #2a2a22; cursor: pointer;
+    aspect-ratio: 1 / 0.8;
+    background: var(--face);
+    border: 1px solid; border-color: var(--hl) var(--dk) var(--dk) var(--hl);
+    box-shadow: inset -1px -1px 0 var(--sh);
+    font: inherit; font-size: 17px; font-weight: bold; color: #2a2a22; cursor: pointer;
   }
-  .key.wide { flex: 1.4; font-size: 11px; }
-  .key:active { border-color: #6f6f68 #f4f4ee #f4f4ee #6f6f68; }
+  .key.wide { flex: 1.4; font-size: 12px; }
+  .key:active { border-color: var(--dk) var(--hl) var(--hl) var(--dk); box-shadow: inset 1px 1px 0 var(--sh); }
 
   .taskbar {
-    position: fixed; left: 0; right: 0; bottom: 0; height: 30px;
+    position: fixed; left: 0; right: 0; bottom: 0; height: 32px;
     display: flex; align-items: center; justify-content: space-between;
-    background: #c8c8c0; border-top: 2px solid #f4f4ee; padding: 0 5px; z-index: 50;
+    background: var(--face); border-top: 2px solid var(--hl); padding: 0 5px; z-index: 50;
   }
-  .file { background: #c8c8c0; border: 2px solid; border-color: #f4f4ee #6f6f68 #6f6f68 #f4f4ee; padding: 3px 12px; font: inherit; font-size: 12px; font-weight: bold; cursor: pointer; }
-  .tray { border: 1px solid; border-color: #6f6f68 #fff #fff #6f6f68; padding: 3px 12px; font-size: 12px; }
+  .file {
+    background: var(--face); font: inherit; font-size: 13px; font-weight: bold; padding: 3px 14px; cursor: pointer;
+    border: 1px solid; border-color: var(--hl) var(--dk) var(--dk) var(--hl); box-shadow: inset -1px -1px 0 var(--sh);
+  }
+  .tray { border: 1px solid; border-color: var(--sh) var(--hl) var(--hl) var(--sh); padding: 3px 14px; font-size: 13px; }
 
   @media (max-width: 700px) {
     .desktop { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 12px 0 44px; }
     .win { position: static; width: 94vw; }
-    .keyboard { display: none; } /* en móvil se usa el teclado nativo tocando el campo */
+    .keyboard { display: none; }
   }
 </style>
