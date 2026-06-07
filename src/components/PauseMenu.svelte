@@ -611,9 +611,11 @@
       grid-template-areas: 'portrait' 'tabs' 'slots';
     }
     .pfp { width: 96px; }
-    .slots { flex-wrap: wrap; }
+    .slots { flex-wrap: wrap; align-items: stretch; }
     .cond { flex: 1 1 100%; }
     .equip { flex: 1 1 0; }
+    /* ITEM: cuadrado de tamaño decente (no depende del alto de la fila) */
+    .item { flex: 0 0 auto; width: clamp(104px, 32vw, 132px); height: clamp(104px, 32vw, 132px); aspect-ratio: auto; }
     /* tabs como barra tocable en móvil (en desktop quedan chicas a la derecha) */
     .tabs { gap: 6px; justify-content: stretch; }
     .tab { flex: 1 1 0; min-height: 44px; padding: 8px 6px; font-size: 13px; }
