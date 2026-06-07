@@ -99,3 +99,6 @@ create policy "auth write profile" on profile for all to authenticated using (tr
 -- ── Imágenes adjuntas por entrada (galería tipo Polaroid) ──────────────
 -- array jsonb de { url, caption }
 alter table entries add column if not exists attachments jsonb not null default '[]';
+
+-- status del menú: 'auto' (según el último diario) o un id de condition fijo
+alter table profile add column if not exists status text not null default 'auto';

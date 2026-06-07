@@ -98,14 +98,15 @@ export async function getMedia(limit = 80) {
 
 // ── perfil (nombre + avatar del menú) ────────────────────────────────────
 export async function getProfile() {
-  const rows = await db()`select name, avatar from profile where id = true limit 1`;
-  return rows[0] ?? { name: 'Chuy', avatar: '/pfp.jpg' };
+  const rows = await db()`select name, avatar, status from profile where id = true limit 1`;
+  return rows[0] ?? { name: 'Chuy', avatar: '/pfp.jpg', status: 'auto' };
 }
 
-export async function updateProfile({ name, avatar }) {
+export async function updateProfile({ name, avatar, status }) {
   const [r] = await db()`
-    insert into profile (id, name, avatar) values (true, ${name}, ${avatar})
-    on conflict (id) do update set name = excluded.name, avatar = excluded.avatar, updated_at = now()
-    returning name, avatar`;
+    insert into profile (id, name, avatar, status) values (true, ${name}, ${avatar}, ${status})
+    on conflict (id) do update set
+      name = excluded.name, avatar = excluded.avatar, status = excluded.status, updated_at = now()
+    returning name, avatar, status`;
   return r;
 }

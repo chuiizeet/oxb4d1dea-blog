@@ -2,10 +2,21 @@
 import Base from '../layouts/Base.astro';
 import Panel from '../components/Panel.svelte';
 import { getProfile } from '../lib/db.js';
+import { CONDITIONS } from '../lib/conditions.js';
 import '../styles/win2k.css';
 const profile = await getProfile();
+const statusOptions = [
+  { id: 'auto', label: 'Automático (según el diario)' },
+  ...Object.entries(CONDITIONS).map(([id, c]) => ({ id, label: c.label })),
+];
 ---
 
 <Base title="Panel">
-  <Panel client:load name={profile.name} avatar={profile.avatar} />
+  <Panel
+    client:load
+    name={profile.name}
+    avatar={profile.avatar}
+    status={profile.status}
+    statusOptions={statusOptions}
+  />
 </Base>

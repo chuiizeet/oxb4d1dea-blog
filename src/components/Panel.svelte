@@ -1,10 +1,11 @@
 <script>
   import { onMount } from 'svelte';
 
-  let { name = 'Chuy', avatar = '/pfp.jpg' } = $props();
+  let { name = 'Chuy', avatar = '/pfp.jpg', status = 'auto', statusOptions = [] } = $props();
   let nm = $state(name);
   let av = $state(avatar);
-  let status = $state('');
+  let st = $state(status);
+  let statusMsg = $state('');
   let uploading = $state(false);
   let saving = $state(false);
   let clock = $state('');
@@ -21,17 +22,17 @@
     const f = ev.target.files?.[0];
     if (!f) return;
     uploading = true;
-    status = 'subiendo foto…';
+    statusMsg = 'subiendo foto…';
     const fd = new FormData();
     fd.append('file', f);
     try {
       const res = await fetch('/api/upload', { method: 'POST', body: fd });
-      if (!res.ok) { status = '✗ ' + (await res.text()); uploading = false; return; }
+      if (!res.ok) { statusMsg = '✗ ' + (await res.text()); uploading = false; return; }
       const r = await res.json();
       av = r.url;
-      status = 'foto lista — guarda para aplicar';
+      statusMsg = 'foto lista — guarda para aplicar';
     } catch (e) {
-      status = '✗ ' + e.message;
+      statusMsg = '✗ ' + e.message;
     }
     uploading = false;
     ev.target.value = '';
@@ -39,19 +40,19 @@
 
   async function save() {
     saving = true;
-    status = 'guardando…';
+    statusMsg = 'guardando…';
     try {
       const res = await fetch('/api/profile', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ name: nm, avatar: av }),
+        body: JSON.stringify({ name: nm, avatar: av, status: st }),
       });
-      if (!res.ok) { status = '✗ ' + (await res.text()); saving = false; return; }
+      if (!res.ok) { statusMsg = '✗ ' + (await res.text()); saving = false; return; }
       const r = await res.json();
-      nm = r.name; av = r.avatar;
-      status = '✓ perfil guardado';
+      nm = r.name; av = r.avatar; st = r.status;
+      statusMsg = '✓ perfil guardado';
     } catch (e) {
-      status = '✗ ' + e.message;
+      statusMsg = '✗ ' + e.message;
     }
     saving = false;
   }
@@ -73,12 +74,17 @@
           <button class="btn" type="button" onclick={() => fileInput.click()} disabled={uploading}>Cambiar foto…</button>
           <input bind:this={fileInput} type="file" accept="image/*" onchange={onFile} hidden />
           <label>Nombre <input type="text" bind:value={nm} maxlength="24" /></label>
+          <label>Status del menú
+            <select bind:value={st}>
+              {#each statusOptions as o}<option value={o.id}>{o.label}</option>{/each}
+            </select>
+          </label>
         </div>
       </div>
 
       <div class="actions">
         <button class="btn primary" onclick={save} disabled={saving || uploading}>Guardar perfil</button>
-        <span class="status">{status}</span>
+        <span class="status">{statusMsg}</span>
       </div>
 
       <div class="links">

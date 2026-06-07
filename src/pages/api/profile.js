@@ -9,8 +9,9 @@ export async function POST({ request }) {
   }
   const name = (d?.name ?? '').toString().trim() || 'Chuy';
   const avatar = (d?.avatar ?? '').toString().trim() || '/pfp.jpg';
+  const status = (d?.status ?? 'auto').toString().trim() || 'auto';
   try {
-    const p = await updateProfile({ name, avatar });
+    const p = await updateProfile({ name, avatar, status });
     return new Response(JSON.stringify({ ok: true, ...p }), { headers: { 'content-type': 'application/json' } });
   } catch (e) {
     return new Response('Error: ' + e.message, { status: 500 });

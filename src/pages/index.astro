@@ -17,9 +17,12 @@ const monthFmt = (d) => {
 const excerpt = (md = '') =>
   md.replace(/[#>*_`\-]/g, '').replace(/\s+/g, ' ').trim().slice(0, 110);
 
-// el "estado" del menú = mood de la última entrada del diario
+// estado del menú: fijo (elegido en el perfil) o automático (último diario)
 const latestDiario = all.find((e) => e.type === 'diario');
-const condition = moodToCondition(latestDiario?.mood);
+const condition =
+  profile.status && profile.status !== 'auto'
+    ? profile.status
+    : moodToCondition(latestDiario?.mood);
 
 const entries = all.map((e) =>
   e.type === 'diario'
