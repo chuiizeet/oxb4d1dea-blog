@@ -1,6 +1,6 @@
 <script>
   import { onMount } from 'svelte';
-  import { marked } from 'marked';
+  import { renderMarkdown } from '../lib/markdown.js';
 
   let { entries = [], moods = [], media = [] } = $props();
 
@@ -22,7 +22,20 @@
   let clock = $state('');
 
   let exNN = $derived(String(f.exfile).padStart(2, '0'));
-  let bodyHtml = $derived(marked.parse(f.body || ''));
+  let bodyHtml = $derived(renderMarkdown(f.body || ''));
+  let bodyEl;
+
+  function insertDate() {
+    const today = new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
+    const mark = `\n\n@fecha: ${today}\n\n`;
+    const el = bodyEl;
+    if (el && typeof el.selectionStart === 'number') {
+      const i = el.selectionStart;
+      f.body = f.body.slice(0, i) + mark + f.body.slice(i);
+    } else {
+      f.body += mark;
+    }
+  }
 
   onMount(() => {
     const t = () => (clock = new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }));
@@ -254,9 +267,13 @@
           </div>
 
           <div class="bodywrap">
-            <label class="bcol">Cuerpo (markdown)
-              <textarea bind:value={f.body} rows="14" placeholder="escribe aquí…"></textarea>
-            </label>
+            <div class="bcol">
+              <div class="blabel">
+                <span>Cuerpo (markdown)</span>
+                <button class="btn small" type="button" onclick={insertDate}>📅 fecha de hoy</button>
+              </div>
+              <textarea bind:this={bodyEl} bind:value={f.body} rows="14" placeholder="escribe aquí…"></textarea>
+            </div>
             <div class="bcol">
               <span class="plabel">Vista previa</span>
               <div class="prose sunken">{@html bodyHtml}</div>
@@ -331,6 +348,7 @@
   .bodywrap { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; align-items: stretch; }
   .bcol { display: flex; flex-direction: column; gap: 4px; }
   .plabel { font-size: 12px; color: #222; }
+  .blabel { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 12px; color: #222; }
   .prose {
     color: #111; padding: 12px 14px; min-height: 320px; max-height: 60vh; overflow: auto; line-height: 1.6; font-size: 14px;
   }
@@ -343,6 +361,7 @@
   .prose :global(code) { background: #eee; padding: 1px 5px; border-radius: 2px; }
   .prose :global(blockquote) { border-left: 3px solid #ccc; margin: 0 0 0.8em; padding-left: 10px; color: #555; }
   .prose :global(:first-child) { margin-top: 0; }
+  .prose :global(.datemark) { text-align: center; color: #8a7f63; font-style: italic; font-size: 0.85em; letter-spacing: 0.08em; margin: 1.4em 0; }
 
   .actions { display: flex; align-items: center; gap: 12px; margin-top: 4px; flex-wrap: wrap; }
   .del { color: #a00000; }

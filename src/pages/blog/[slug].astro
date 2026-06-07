@@ -1,13 +1,13 @@
 ---
-import { marked } from 'marked';
 import Base from '../../layouts/Base.astro';
 import { getEntry } from '../../lib/db.js';
+import { renderMarkdown } from '../../lib/markdown.js';
 
 const { slug } = Astro.params;
 const entry = await getEntry('blog', slug);
 if (!entry) return new Response(null, { status: 404 });
 
-const contentHtml = await marked.parse(entry.body ?? '');
+const contentHtml = renderMarkdown(entry.body ?? '');
 const dateStr = new Date(entry.date).toLocaleDateString('es-ES', {
   year: 'numeric',
   month: 'long',

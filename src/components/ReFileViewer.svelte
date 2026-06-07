@@ -9,7 +9,10 @@
     num = '',
     date = '',
     attachments = [],    // [{ url, caption }]
+    editedAt = null,     // ISO de la última edición (o null)
   } = $props();
+
+  let editedLabel = $state('');
 
   // página 0 = portada (solo EX file); resto = texto sobre el EX file atenuado
   let items = $derived([{ type: 'cover' }, ...pages.map((html) => ({ type: 'text', html }))]);
@@ -30,12 +33,18 @@
       if (e.key === 'Escape') { if (bigPhoto) bigPhoto = null; else showPhotos = false; }
       return;
     }
+    if (e.key === 'Escape') { window.location.href = '/'; return; }   // cerrar archivo
     if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { e.preventDefault(); next(); }
     else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); prev(); }
   }
 
   onMount(() => {
     requestAnimationFrame(() => { booted = true; });
+    if (editedAt) {
+      editedLabel = new Date(editedAt).toLocaleString('es-MX', {
+        day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit',
+      });
+    }
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   });
@@ -50,6 +59,7 @@
       {#if num}<div class="num">ARCHIVO Nº{num}</div>{/if}
       <h1 class="ttl">{title}</h1>
       {#if date}<div class="date">{date}</div>{/if}
+      {#if editedLabel}<div class="edited">✎ editado: {editedLabel}</div>{/if}
       {#if attachments.length}
         <button class="clip" onclick={() => (showPhotos = true)}>📷 ver fotos ({attachments.length})</button>
       {/if}
@@ -147,6 +157,7 @@
     text-shadow: 0 0 12px rgba(91, 255, 143, 0.55);
   }
   .date { color: var(--green-dim); font-size: 11px; letter-spacing: 0.2em; margin-top: 8px; }
+  .edited { color: var(--green-dim); font-size: 10px; letter-spacing: 0.1em; margin-top: 4px; opacity: 0.8; }
   .clip {
     background: transparent;
     border: 1px solid var(--green-dim);
@@ -206,6 +217,15 @@
   .text :global(a) { color: var(--green-soft); }
   .text :global(ul), .text :global(ol) { margin: 0 0 1em; padding-left: 1.3em; text-align: left; }
   .text :global(img), .text :global(video) { max-width: 100%; height: auto; -webkit-text-stroke: 0; }
+  .text :global(.datemark) {
+    text-align: center;
+    color: rgba(180, 255, 200, 0.55);
+    font-size: 0.7em;
+    letter-spacing: 0.18em;
+    margin: 1.6em 0;
+    -webkit-text-stroke: 0;
+    text-shadow: 0 0 4px rgba(0, 0, 0, 0.95);
+  }
   @keyframes appear { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 
   /* flechas verdes */
