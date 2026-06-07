@@ -20,6 +20,7 @@ const pages = html
   .map((s) => s.trim())
   .filter(Boolean);
 const image = diarioImage(entry);
+const attachments = Array.isArray(entry.attachments) ? entry.attachments : [];
 const dateStr = new Date(entry.date).toLocaleDateString('es-ES', {
   year: 'numeric',
   month: 'long',
@@ -29,5 +30,5 @@ const dateStr = new Date(entry.date).toLocaleDateString('es-ES', {
 ---
 
 <Base title={entry.title} fullbleed>
-  <ReFileViewer client:load image={image} pages={pages} title={entry.title} num={num} date={dateStr} />
+  <ReFileViewer client:load image={image} pages={pages} title={entry.title} num={num} date={dateStr} attachments={attachments} />
 </Base>

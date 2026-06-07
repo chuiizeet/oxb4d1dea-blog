@@ -8,12 +8,16 @@
     title = '',
     num = '',
     date = '',
+    attachments = [],    // [{ url, caption }] -> fotos tipo Polaroid
   } = $props();
 
   let items = $derived([
     ...(image ? [{ type: 'image' }] : []),
     ...pages.map((html) => ({ type: 'text', html })),
   ]);
+
+  let showPhotos = $state(false);
+  let bigPhoto = $state(null);
   let total = $derived(Math.max(1, items.length));
 
   let page = $state(0);
@@ -68,6 +72,10 @@
   }
 
   function onKey(e) {
+    if (showPhotos) {
+      if (e.key === 'Escape') { if (bigPhoto) bigPhoto = null; else showPhotos = false; }
+      return;
+    }
     if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
       e.preventDefault();
       next();
@@ -115,6 +123,9 @@
       {#if num}<div class="num">ARCHIVO Nº{num}</div>{/if}
       <h1 class="ttl">{title}</h1>
       {#if date}<div class="date">{date}</div>{/if}
+      {#if attachments.length}
+        <button class="clip" onclick={() => (showPhotos = true)}>📷 ver fotos ({attachments.length})</button>
+      {/if}
     </header>
 
     <div class="stage">
@@ -153,6 +164,36 @@
     </footer>
   </div>
   <Crt />
+
+  {#if showPhotos}
+    <div class="gallery" role="dialog">
+      <div class="gbar">
+        <span class="gtitle">📷 FOTOS ({attachments.length})</span>
+        <button class="gclose" onclick={() => { showPhotos = false; bigPhoto = null; }}>✕ cerrar</button>
+      </div>
+      <div class="ggrid">
+        {#each attachments as a}
+          <button class="gcell" onclick={() => (bigPhoto = a)}>
+            <img src={a.url} alt={a.caption} />
+            {#if a.caption}<span class="gcap">{a.caption}</span>{/if}
+          </button>
+        {/each}
+      </div>
+    </div>
+
+    {#if bigPhoto}
+      <div class="lightbox" onclick={() => (bigPhoto = null)}>
+        <figure class="polaroid big" onclick={(e) => e.stopPropagation()}>
+          <div class="pframe"><img src={bigPhoto.url} alt={bigPhoto.caption} /></div>
+          <figcaption class="pcap">
+            {#if bigPhoto.caption}<span class="ptext">{bigPhoto.caption}</span>{/if}
+            <span class="pdate">{date}</span>
+          </figcaption>
+        </figure>
+        <button class="gclose lbclose" onclick={() => (bigPhoto = null)}>✕</button>
+      </div>
+    {/if}
+  {/if}
 </div>
 
 <style>
@@ -233,6 +274,77 @@
     object-fit: contain;
     filter: drop-shadow(0 18px 40px rgba(0, 0, 0, 0.8));
   }
+
+  .clip {
+    background: transparent;
+    border: 1px solid var(--green-dim);
+    color: var(--green-soft);
+    font: inherit;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    padding: 5px 12px;
+    margin-top: 10px;
+    cursor: pointer;
+  }
+  .clip:hover { background: rgba(91, 255, 143, 0.12); }
+
+  /* foto adjunta estilo Polaroid */
+  .polaroid {
+    background: #f6f1e4;
+    padding: 12px 12px 0;
+    box-shadow: 0 18px 44px rgba(0, 0, 0, 0.75);
+    transform: rotate(-1.6deg);
+    max-width: min(360px, 82vw);
+  }
+  .polaroid .pframe { background: #0c0c0c; overflow: hidden; }
+  .polaroid img { display: block; width: 100%; max-height: 44vh; object-fit: cover; }
+  .pcap { padding: 12px 8px 16px; text-align: center; color: #2a241a; font-family: 'Segoe Script', 'Bradley Hand', 'Comic Sans MS', cursive; }
+  .ptext { display: block; font-size: 16px; line-height: 1.3; }
+  .pdate { display: block; font-size: 11px; color: #7a6f5a; margin-top: 6px; letter-spacing: 0.08em; }
+
+  /* galería de fotos: overlay siempre al frente, grid + lightbox */
+  .gallery {
+    position: fixed; inset: 0; z-index: 200;
+    background: rgba(0, 0, 0, 0.96);
+    display: flex; flex-direction: column;
+  }
+  .gbar {
+    flex: 0 0 auto;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 18px; border-bottom: 1px solid var(--green-dim);
+  }
+  .gtitle { color: var(--green-soft); font-size: 13px; letter-spacing: 0.18em; }
+  .gclose {
+    background: transparent; border: 1px solid var(--green-dim); color: var(--green-soft);
+    font: inherit; font-size: 12px; letter-spacing: 0.1em; padding: 7px 16px; cursor: pointer;
+  }
+  .gclose:hover { background: rgba(91, 255, 143, 0.12); }
+  .ggrid {
+    flex: 1; min-height: 0; overflow: auto; padding: 22px;
+    display: grid; gap: 20px;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    align-content: start;
+  }
+  .gcell {
+    background: #f6f1e4; padding: 8px 8px 0; border: none; cursor: pointer;
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.6); transform: rotate(-1.2deg);
+  }
+  .gcell:nth-child(even) { transform: rotate(1.4deg); }
+  .gcell:hover { filter: brightness(1.05); }
+  .gcell img { display: block; width: 100%; aspect-ratio: 1; object-fit: cover; background: #0c0c0c; }
+  .gcap {
+    display: block; padding: 8px 4px 12px; color: #2a241a;
+    font-family: 'Segoe Script', 'Bradley Hand', 'Comic Sans MS', cursive; font-size: 13px; text-align: center;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .lightbox {
+    position: fixed; inset: 0; z-index: 210;
+    background: rgba(0, 0, 0, 0.92);
+    display: flex; align-items: center; justify-content: center; padding: 24px;
+  }
+  .polaroid.big { transform: none; max-width: min(520px, 92vw); cursor: default; }
+  .polaroid.big img { max-height: 70vh; }
+  .lbclose { position: fixed; top: 14px; right: 18px; padding: 5px 12px; }
 
   .card {
     position: relative;

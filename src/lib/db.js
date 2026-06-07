@@ -31,11 +31,9 @@ export async function getAllEntries() {
   return await db()`select * from entries order by date desc`;
 }
 
-const COLS = ['type', 'slug', 'title', 'body', 'mood', 'exfile', 'image', 'summary', 'tags', 'date', 'published'];
-
 export async function upsertEntry(data) {
   const s = db();
-  const row = {
+  const v = {
     type: data.type,
     slug: data.slug,
     title: data.title,
@@ -47,14 +45,27 @@ export async function upsertEntry(data) {
     tags: Array.isArray(data.tags) ? data.tags : [],
     date: data.date,
     published: data.published ?? true,
+    attachments: Array.isArray(data.attachments) ? data.attachments : [],
   };
   let saved;
   if (data.id) {
-    [saved] = await s`update entries set ${s(row, ...COLS)} where id = ${data.id} returning *`;
+    [saved] = await s`
+      update entries set
+        type = ${v.type}, slug = ${v.slug}, title = ${v.title}, body = ${v.body},
+        mood = ${v.mood}, exfile = ${v.exfile}, image = ${v.image}, summary = ${v.summary},
+        tags = ${v.tags}, date = ${v.date}, published = ${v.published}, attachments = ${s.json(v.attachments)}
+      where id = ${data.id} returning *`;
   } else {
     [saved] = await s`
-      insert into entries ${s(row, ...COLS)}
-      on conflict (type, slug) do update set ${s(row, ...COLS.filter((c) => c !== 'type' && c !== 'slug'))}
+      insert into entries
+        (type, slug, title, body, mood, exfile, image, summary, tags, date, published, attachments)
+      values
+        (${v.type}, ${v.slug}, ${v.title}, ${v.body}, ${v.mood}, ${v.exfile}, ${v.image},
+         ${v.summary}, ${v.tags}, ${v.date}, ${v.published}, ${s.json(v.attachments)})
+      on conflict (type, slug) do update set
+        title = excluded.title, body = excluded.body, mood = excluded.mood, exfile = excluded.exfile,
+        image = excluded.image, summary = excluded.summary, tags = excluded.tags, date = excluded.date,
+        published = excluded.published, attachments = excluded.attachments
       returning *`;
   }
   return saved;
@@ -79,6 +90,10 @@ export async function addMedia(entryId, kind, url, caption = null) {
   await db()`
     insert into media (entry_id, kind, url, caption)
     values (${entryId}, ${kind}, ${url}, ${caption})`;
+}
+
+export async function getMedia(limit = 80) {
+  return await db()`select kind, url, caption from media order by created_at desc limit ${limit}`;
 }
 
 // ── perfil (nombre + avatar del menú) ────────────────────────────────────

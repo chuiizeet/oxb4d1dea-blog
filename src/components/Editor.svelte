@@ -2,12 +2,13 @@
   import { onMount } from 'svelte';
   import { marked } from 'marked';
 
-  let { entries = [], moods = [] } = $props();
+  let { entries = [], moods = [], media = [] } = $props();
 
   const today = () => new Date().toISOString().slice(0, 10);
   const blank = () => ({
     id: null, type: 'diario', title: '', date: today(),
     mood: 'fine', exfile: 1, image: '', summary: '', tags: '', body: '', published: true,
+    attachments: [],
   });
 
   let list = $state([...entries]);
@@ -15,7 +16,8 @@
   let status = $state('');
   let saving = $state(false);
   let uploading = $state(false);
-  let lastUpload = $state(null);
+  let library = $state([...media]);
+  let picked = $state(null);
   let revs = $state([]);
   let clock = $state('');
 
@@ -44,15 +46,16 @@
       mood: e.mood || 'fine', exfile: e.exfile ?? 1, image: e.image || '',
       summary: e.summary || '', tags: (e.tags || []).join(', '), body: e.body || '',
       published: e.published,
+      attachments: (e.attachments || []).map((a) => ({ url: a.url, caption: a.caption || '' })),
     };
     status = '';
-    lastUpload = null;
+    picked = null;
     loadRevs(e.id);
   }
   function nuevo() {
     f = blank();
     status = '';
-    lastUpload = null;
+    picked = null;
     revs = [];
   }
 
@@ -67,6 +70,7 @@
       summary: f.type === 'blog' ? f.summary : null,
       tags: f.tags.split(',').map((t) => t.trim()).filter(Boolean),
       body: f.body, published: f.published,
+      attachments: f.attachments,
     };
     try {
       const res = await fetch('/api/save-entry', {
@@ -115,23 +119,28 @@
     try {
       const res = await fetch('/api/upload', { method: 'POST', body: fd });
       if (!res.ok) { status = '✗ ' + (await res.text()); uploading = false; return; }
-      lastUpload = await res.json();
-      status = '✓ subido';
+      const m = await res.json();
+      library = [m, ...library];
+      picked = m;
+      status = '✓ subido — elige: insertar en el texto o usar de portada';
     } catch (e) {
       status = '✗ ' + e.message;
     }
     uploading = false;
     ev.target.value = '';
   }
-  function insertMedia() {
-    if (!lastUpload) return;
+  function insertUrl(m) {
+    if (!m) return;
     f.body +=
-      lastUpload.kind === 'video'
-        ? `\n\n<video src="${lastUpload.url}" controls style="max-width:100%"></video>\n\n`
-        : `\n\n![](${lastUpload.url})\n\n`;
+      m.kind === 'video'
+        ? `\n\n<video src="${m.url}" controls style="max-width:100%"></video>\n\n`
+        : `\n\n![](${m.url})\n\n`;
   }
-  function useAsImage() {
-    if (lastUpload) f.image = lastUpload.url;
+  function attach(m) {
+    if (m) f.attachments = [...f.attachments, { url: m.url, caption: '' }];
+  }
+  function removeAtt(i) {
+    f.attachments = f.attachments.filter((_, j) => j !== i);
   }
 
   function restore(rev) {
@@ -205,22 +214,42 @@
             <label>Resumen <input type="text" bind:value={f.summary} placeholder="resumen (blog)" /></label>
           {/if}
 
+          {#if f.attachments.length}
+            <div class="atts">
+              <span class="plabel">Imágenes adjuntas (galería tipo Polaroid en el diario)</span>
+              {#each f.attachments as a, i}
+                <div class="att">
+                  <img class="attimg" src={a.url} alt="" />
+                  <input class="attcap" type="text" placeholder="descripción (opcional)" bind:value={f.attachments[i].caption} />
+                  <button class="btn small" type="button" onclick={() => removeAtt(i)}>quitar</button>
+                </div>
+              {/each}
+            </div>
+          {/if}
+
           <label>Tags <input type="text" bind:value={f.tags} placeholder="coma, separadas" /></label>
 
           <div class="media">
-            <label class="mlabel">Media (foto/video)
+            <label class="mlabel">Media — subir foto/video
               <input type="file" accept="image/*,video/*,audio/*" onchange={onFile} disabled={uploading} />
             </label>
-            {#if lastUpload}
-              <div class="mprev">
-                {#if lastUpload.kind === 'video'}
-                  <video src={lastUpload.url} muted></video>
-                {:else}
-                  <img src={lastUpload.url} alt="" />
-                {/if}
-                <button class="btn" type="button" onclick={insertMedia}>insertar en cuerpo</button>
-                {#if lastUpload.kind === 'photo'}<button class="btn" type="button" onclick={useAsImage}>usar de portada</button>{/if}
+            {#if library.length}
+              <div class="lib">
+                {#each library as m}
+                  <button class="libitem" class:on={picked === m} type="button" title={m.caption ?? ''} onclick={() => (picked = m)}>
+                    {#if m.kind === 'video'}<video src={m.url} muted></video>{:else}<img src={m.url} alt="" />{/if}
+                  </button>
+                {/each}
               </div>
+              {#if picked}
+                <div class="picked">
+                  <span class="mhint">seleccionada →</span>
+                  <button class="btn" type="button" onclick={() => insertUrl(picked)}>Insertar en el texto</button>
+                  {#if picked.kind === 'photo'}<button class="btn" type="button" onclick={() => attach(picked)}>Adjuntar a la entrada</button>{/if}
+                </div>
+              {:else}
+                <div class="mhint">Tu media subida — haz click en una para usarla.</div>
+              {/if}
             {/if}
           </div>
 
@@ -288,8 +317,16 @@
 
   .media { display: flex; flex-direction: column; gap: 8px; border: 1px solid #808080; background: #cdc9c1; padding: 10px; }
   .mlabel { font-size: 12px; color: #222; }
-  .mprev { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-  .mprev img, .mprev video { width: 80px; height: 80px; object-fit: cover; border: 2px solid; border-color: #808080 #fff #fff #808080; }
+  .lib { display: flex; flex-wrap: wrap; gap: 6px; }
+  .libitem { width: 60px; height: 60px; padding: 0; cursor: pointer; background: #fff; overflow: hidden; border: 2px solid; border-color: #808080 #fff #fff #808080; }
+  .libitem.on { border: 2px solid #0a246a; }
+  .libitem img, .libitem video { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .picked { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .mhint { font-size: 12px; color: #444; }
+  .atts { display: flex; flex-direction: column; gap: 6px; }
+  .att { display: flex; align-items: center; gap: 10px; }
+  .attimg { width: 48px; height: 48px; object-fit: cover; flex: 0 0 auto; border: 2px solid; border-color: #808080 #fff #fff #808080; }
+  .attcap { flex: 1; min-width: 0; }
 
   .bodywrap { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; align-items: stretch; }
   .bcol { display: flex; flex-direction: column; gap: 4px; }

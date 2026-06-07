@@ -95,3 +95,7 @@ drop policy if exists "public read profile" on profile;
 create policy "public read profile" on profile for select using (true);
 drop policy if exists "auth write profile" on profile;
 create policy "auth write profile" on profile for all to authenticated using (true) with check (true);
+
+-- ── Imágenes adjuntas por entrada (galería tipo Polaroid) ──────────────
+-- array jsonb de { url, caption }
+alter table entries add column if not exists attachments jsonb not null default '[]';

@@ -1,7 +1,12 @@
 ---
 import Base from '../layouts/Base.astro';
 import LoginDesktop from '../components/LoginDesktop.svelte';
-import { checkPassword, createSession, COOKIE, MAX_AGE } from '../lib/auth.js';
+import { checkPassword, createSession, verifySession, COOKIE, MAX_AGE } from '../lib/auth.js';
+
+// si ya hay sesión válida, no mostrar el login otra vez -> directo al panel
+if (verifySession(Astro.cookies.get(COOKIE)?.value)) {
+  return Astro.redirect('/panel');
+}
 
 // fallback sin JS: POST clásico a esta misma página
 let error = '';
