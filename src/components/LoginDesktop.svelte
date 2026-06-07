@@ -133,7 +133,7 @@
       if (r.ok) {
         phase = 'granted';
         termMsg = 'ACCESS GRANTED';
-        later(() => (window.location.href = '/editor'), 950);
+        later(() => (window.location.href = '/panel'), 950);
       } else {
         phase = 'denied';
         termMsg = 'ACCESS DENIED';

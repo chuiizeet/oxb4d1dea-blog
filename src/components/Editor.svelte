@@ -1,4 +1,7 @@
 <script>
+  import { onMount } from 'svelte';
+  import { marked } from 'marked';
+
   let { entries = [], moods = [] } = $props();
 
   const today = () => new Date().toISOString().slice(0, 10);
@@ -14,8 +17,17 @@
   let uploading = $state(false);
   let lastUpload = $state(null);
   let revs = $state([]);
+  let clock = $state('');
 
   let exNN = $derived(String(f.exfile).padStart(2, '0'));
+  let bodyHtml = $derived(marked.parse(f.body || ''));
+
+  onMount(() => {
+    const t = () => (clock = new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }));
+    t();
+    const i = setInterval(t, 10000);
+    return () => clearInterval(i);
+  });
 
   async function loadRevs(id) {
     revs = [];
@@ -136,150 +148,183 @@
   const fmtTs = (t) => new Date(t).toLocaleString('es-ES');
 </script>
 
-<div class="ed">
-  <aside class="side">
-    <button class="new" onclick={nuevo}>+ NUEVA</button>
-    <div class="entries">
-      {#each list as e}
-        <button class="erow" class:on={f.id === e.id} onclick={() => loadEntry(e)}>
-          <span class="t">{e.title || '(sin título)'}</span>
-          <span class="m">{e.type}{e.published ? '' : ' · borrador'}</span>
-        </button>
-      {/each}
+<div class="w2k">
+  <div class="win">
+    <div class="tb">
+      <span class="ttl">EDITOR — diario &amp; blog</span>
+      <span class="wbtns"><span class="wb">_</span><span class="wb">▢</span><a class="wb" href="/panel" aria-label="Cerrar">✕</a></span>
     </div>
-    <a class="logout" href="/logout">cerrar sesión</a>
-  </aside>
+    <div class="menubar"><span><u>A</u>rchivo</span><span><u>E</u>dición</span><span><u>V</u>er</span><span>A<u>y</u>uda</span></div>
 
-  <main class="form">
-    <div class="row">
-      <label>Tipo
-        <select bind:value={f.type}>
-          <option value="diario">diario</option>
-          <option value="blog">blog</option>
-        </select>
-      </label>
-      <label>Fecha <input type="date" bind:value={f.date} /></label>
-      <label class="chk"><input type="checkbox" bind:checked={f.published} /> publicado</label>
-    </div>
-
-    <label>Título <input type="text" bind:value={f.title} placeholder="título" /></label>
-
-    {#if f.type === 'diario'}
-      <div class="row">
-        <label>Mood
-          <select bind:value={f.mood}>
-            {#each moods as m}<option value={m.id}>{m.label}</option>{/each}
-          </select>
-        </label>
-        <label>EX file
-          <select bind:value={f.exfile}>
-            {#each Array.from({ length: 16 }) as _, i}
-              <option value={i + 1}>{String(i + 1).padStart(2, '0')}</option>
+    <div class="winbody">
+      <div class="ed">
+        <aside class="side">
+          <button class="btn new" onclick={nuevo}>+ Nueva entrada</button>
+          <div class="entries sunken">
+            {#each list as e}
+              <button class="erow" class:on={f.id === e.id} onclick={() => loadEntry(e)}>
+                <span class="t">{e.title || '(sin título)'}</span>
+                <span class="m">{e.type}{e.published ? '' : ' · borrador'}</span>
+              </button>
             {/each}
-          </select>
-        </label>
-        <img class="exprev" src={`/exfiles/${exNN}.png`} alt="" />
-      </div>
-    {:else}
-      <label>Resumen <input type="text" bind:value={f.summary} placeholder="resumen (blog)" /></label>
-    {/if}
-
-    <label>Tags <input type="text" bind:value={f.tags} placeholder="coma, separadas" /></label>
-
-    <!-- media -->
-    <div class="media">
-      <label class="mlabel">Media (foto/video)
-        <input type="file" accept="image/*,video/*,audio/*" onchange={onFile} disabled={uploading} />
-      </label>
-      {#if lastUpload}
-        <div class="mprev">
-          {#if lastUpload.kind === 'video'}
-            <video src={lastUpload.url} muted></video>
-          {:else}
-            <img src={lastUpload.url} alt="" />
-          {/if}
-          <button type="button" onclick={insertMedia}>insertar en cuerpo</button>
-          {#if lastUpload.kind === 'photo'}<button type="button" onclick={useAsImage}>usar de portada</button>{/if}
-        </div>
-      {/if}
-    </div>
-
-    <label>Cuerpo (markdown)
-      <textarea bind:value={f.body} rows="12" placeholder="escribe aquí…"></textarea>
-    </label>
-
-    <div class="actions">
-      <button class="save" onclick={save} disabled={saving}>GUARDAR</button>
-      {#if f.id}<button class="del" onclick={del}>borrar</button>{/if}
-      <span class="status">{status}</span>
-    </div>
-
-    {#if f.id && revs.length}
-      <div class="revs">
-        <div class="rh">Historial ({revs.length})</div>
-        {#each revs as r}
-          <div class="rrow">
-            <span class="rt">{fmtTs(r.created_at)}</span>
-            <span class="rn">{r.note ?? ''}</span>
-            <button type="button" onclick={() => restore(r)}>restaurar</button>
           </div>
-        {/each}
+          <a class="logout" href="/logout">cerrar sesión</a>
+        </aside>
+
+        <main class="form">
+          <div class="row">
+            <label>Tipo
+              <select bind:value={f.type}>
+                <option value="diario">diario</option>
+                <option value="blog">blog</option>
+              </select>
+            </label>
+            <label>Fecha <input type="date" bind:value={f.date} /></label>
+            <label class="chk"><input type="checkbox" bind:checked={f.published} /> publicado</label>
+          </div>
+
+          <label>Título <input type="text" bind:value={f.title} placeholder="título" /></label>
+
+          {#if f.type === 'diario'}
+            <div class="row">
+              <label>Mood
+                <select bind:value={f.mood}>
+                  {#each moods as m}<option value={m.id}>{m.label}</option>{/each}
+                </select>
+              </label>
+              <label>EX file
+                <select bind:value={f.exfile}>
+                  {#each Array.from({ length: 16 }) as _, i}
+                    <option value={i + 1}>{String(i + 1).padStart(2, '0')}</option>
+                  {/each}
+                </select>
+              </label>
+              <img class="exprev" src={`/exfiles/${exNN}.png`} alt="" />
+            </div>
+          {:else}
+            <label>Resumen <input type="text" bind:value={f.summary} placeholder="resumen (blog)" /></label>
+          {/if}
+
+          <label>Tags <input type="text" bind:value={f.tags} placeholder="coma, separadas" /></label>
+
+          <div class="media">
+            <label class="mlabel">Media (foto/video)
+              <input type="file" accept="image/*,video/*,audio/*" onchange={onFile} disabled={uploading} />
+            </label>
+            {#if lastUpload}
+              <div class="mprev">
+                {#if lastUpload.kind === 'video'}
+                  <video src={lastUpload.url} muted></video>
+                {:else}
+                  <img src={lastUpload.url} alt="" />
+                {/if}
+                <button class="btn" type="button" onclick={insertMedia}>insertar en cuerpo</button>
+                {#if lastUpload.kind === 'photo'}<button class="btn" type="button" onclick={useAsImage}>usar de portada</button>{/if}
+              </div>
+            {/if}
+          </div>
+
+          <div class="bodywrap">
+            <label class="bcol">Cuerpo (markdown)
+              <textarea bind:value={f.body} rows="14" placeholder="escribe aquí…"></textarea>
+            </label>
+            <div class="bcol">
+              <span class="plabel">Vista previa</span>
+              <div class="prose sunken">{@html bodyHtml}</div>
+            </div>
+          </div>
+
+          <div class="actions">
+            <button class="btn primary" onclick={save} disabled={saving}>Guardar</button>
+            {#if f.id}<button class="btn del" onclick={del}>Borrar</button>{/if}
+            <span class="status">{status}</span>
+          </div>
+
+          {#if f.id && revs.length}
+            <div class="revs">
+              <div class="rh">Historial ({revs.length})</div>
+              {#each revs as r}
+                <div class="rrow">
+                  <span class="rt">{fmtTs(r.created_at)}</span>
+                  <span class="rn">{r.note ?? ''}</span>
+                  <button class="btn small" type="button" onclick={() => restore(r)}>restaurar</button>
+                </div>
+              {/each}
+            </div>
+          {/if}
+        </main>
       </div>
-    {/if}
-  </main>
+    </div>
+  </div>
+
+  <div class="taskbar"><button class="btn start">▣ Inicio</button><div class="tray">{clock}</div></div>
 </div>
 
 <style>
-  .ed {
-    min-height: 100dvh;
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 12px;
-    padding: clamp(12px, 3vw, 24px);
-    background: radial-gradient(120% 90% at 50% 0%, #14110d, #060504);
-    color: #e7e2d4;
-    font-family: ui-monospace, 'SF Mono', 'Courier New', monospace;
-  }
+  .win { max-width: 1100px; margin: 0 auto; }
+  .winbody { padding: 12px; }
+  .ed { display: grid; grid-template-columns: 1fr; gap: 12px; }
+
   .side { display: flex; flex-direction: column; gap: 8px; }
-  .new { background: transparent; border: 1px solid #3a3122; color: #c89b5a; padding: 8px; font: inherit; letter-spacing: 0.1em; cursor: pointer; }
-  .entries { display: flex; flex-direction: column; gap: 4px; max-height: 30vh; overflow: auto; }
-  .erow { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; background: #16110b; border: 1px solid #211d18; color: #d9d2c4; padding: 8px 10px; font: inherit; text-align: left; cursor: pointer; }
-  .erow.on { border-color: #c89b5a; }
+  .new { width: 100%; font-weight: bold; }
+  .entries { display: flex; flex-direction: column; max-height: 40vh; overflow: auto; }
+  .erow {
+    display: flex; justify-content: space-between; gap: 8px; align-items: baseline;
+    background: transparent; border: none; border-bottom: 1px solid #e6e3db; color: #000;
+    padding: 7px 9px; font: inherit; font-size: 13px; text-align: left; cursor: pointer;
+  }
+  .erow:hover, .erow.on { background: #0a246a; color: #fff; }
   .erow .t { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .erow .m { color: #8c8475; font-size: 11px; }
-  .logout { color: #8c8475; font-size: 12px; text-decoration: underline; }
+  .erow .m { color: #666; font-size: 11px; }
+  .erow:hover .m, .erow.on .m { color: #c9d4ee; }
+  .logout { color: #0a246a; font-size: 12px; }
 
   .form { display: flex; flex-direction: column; gap: 12px; }
   .row { display: flex; flex-wrap: wrap; gap: 12px; align-items: end; }
-  label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: #b7ae9a; letter-spacing: 0.06em; flex: 1; min-width: 0; }
-  .chk { flex-direction: row; align-items: center; gap: 6px; flex: 0 0 auto; }
-  input[type='text'], input[type='date'], select, textarea {
-    background: #100c08; border: 1px solid #3a3122; color: #ece5d2; padding: 9px 10px; font: inherit; width: 100%;
-  }
-  textarea { resize: vertical; line-height: 1.5; }
-  .exprev { width: 52px; height: 52px; object-fit: cover; border: 1px solid #211d18; background: #0c1430; flex: 0 0 auto; }
+  .form label { flex: 1; min-width: 0; }
+  .chk { flex: 0 0 auto; flex-direction: row; align-items: center; gap: 6px; }
+  .chk input { width: auto; }
+  .exprev { width: 52px; height: 52px; object-fit: cover; flex: 0 0 auto; border: 2px solid; border-color: #808080 #fff #fff #808080; }
 
-  .media { display: flex; flex-direction: column; gap: 8px; border: 1px dashed #3a3122; padding: 10px; }
-  .mlabel input[type='file'] { color: #b7ae9a; }
+  .media { display: flex; flex-direction: column; gap: 8px; border: 1px solid #808080; background: #cdc9c1; padding: 10px; }
+  .mlabel { font-size: 12px; color: #222; }
   .mprev { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-  .mprev img, .mprev video { width: 80px; height: 80px; object-fit: cover; border: 1px solid #211d18; }
-  .mprev button, .del { background: transparent; border: 1px solid #3a3122; color: #c89b5a; padding: 5px 10px; font: inherit; cursor: pointer; }
+  .mprev img, .mprev video { width: 80px; height: 80px; object-fit: cover; border: 2px solid; border-color: #808080 #fff #fff #808080; }
 
-  .actions { display: flex; align-items: center; gap: 14px; margin-top: 4px; }
-  .save { background: #1f7a45; border: 1px solid #46f08a; color: #eafff0; padding: 10px 22px; font: inherit; letter-spacing: 0.12em; cursor: pointer; }
-  .save:disabled { opacity: 0.5; cursor: default; }
-  .del { color: #ff7a6a; border-color: #5a2a24; }
-  .status { font-size: 13px; color: #9dffc1; }
+  .bodywrap { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; align-items: stretch; }
+  .bcol { display: flex; flex-direction: column; gap: 4px; }
+  .plabel { font-size: 12px; color: #222; }
+  .prose {
+    color: #111; padding: 12px 14px; min-height: 320px; max-height: 60vh; overflow: auto; line-height: 1.6; font-size: 14px;
+  }
+  .prose :global(h1), .prose :global(h2), .prose :global(h3) { color: #0a246a; margin: 0.7em 0 0.3em; line-height: 1.3; }
+  .prose :global(p) { margin: 0 0 0.8em; }
+  .prose :global(img), .prose :global(video) { max-width: 100%; height: auto; display: block; margin: 8px 0; }
+  .prose :global(a) { color: #0a4ac0; }
+  .prose :global(ul), .prose :global(ol) { margin: 0 0 0.8em; padding-left: 1.4em; }
+  .prose :global(hr) { border: none; border-top: 1px dashed #aaa; margin: 14px 0; }
+  .prose :global(code) { background: #eee; padding: 1px 5px; border-radius: 2px; }
+  .prose :global(blockquote) { border-left: 3px solid #ccc; margin: 0 0 0.8em; padding-left: 10px; color: #555; }
+  .prose :global(:first-child) { margin-top: 0; }
 
-  .revs { border-top: 1px solid #211d18; margin-top: 8px; padding-top: 10px; display: flex; flex-direction: column; gap: 4px; }
-  .rh { color: #8c8475; font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase; }
-  .rrow { display: flex; align-items: center; gap: 10px; font-size: 12px; color: #b7ae9a; }
+  .actions { display: flex; align-items: center; gap: 12px; margin-top: 4px; flex-wrap: wrap; }
+  .del { color: #a00000; }
+  .btn.small { padding: 2px 8px; font-size: 11px; }
+  .status { font-size: 12px; color: #0a4a0a; }
+
+  .revs { border-top: 1px solid #808080; margin-top: 8px; padding-top: 10px; display: flex; flex-direction: column; gap: 4px; }
+  .rh { color: #444; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; }
+  .rrow { display: flex; align-items: center; gap: 10px; font-size: 12px; color: #333; }
   .rrow .rt { min-width: 160px; }
-  .rrow .rn { flex: 1; color: #8c8475; }
-  .rrow button { background: transparent; border: 1px solid #3a3122; color: #c89b5a; padding: 3px 8px; font: inherit; font-size: 11px; cursor: pointer; }
+  .rrow .rn { flex: 1; color: #666; }
+
+  .start { font-weight: bold; }
 
   @media (min-width: 820px) {
-    .ed { grid-template-columns: 260px 1fr; align-items: start; }
-    .entries { max-height: 70vh; }
+    .ed { grid-template-columns: 250px 1fr; align-items: start; }
+    .entries { max-height: 64vh; }
+  }
+  @media (max-width: 720px) {
+    .bodywrap { grid-template-columns: 1fr; }
   }
 </style>

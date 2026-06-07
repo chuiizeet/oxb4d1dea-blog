@@ -60,8 +60,8 @@
   <!-- consola: portrait (alto) + tabs (arriba) + slots (condition/equip/item) -->
   <section class="console">
     <div class="portrait">
-      <div class="namebox panel"><span class="name">{name}</span></div>
-      <div class="pfpbox panel"><img class="pfp" src={avatar} alt={name} /></div>
+      <a class="namebox panel" href="/login" aria-label="Acceder"><span class="name">{name}</span></a>
+      <a class="pfpbox panel" href="/login" aria-label="Acceder"><img class="pfp" src={avatar} alt={name} /></a>
     </div>
 
     <nav class="tabs" aria-label="secciones">
@@ -280,6 +280,8 @@
     display: grid;
     place-items: center;
     padding: 8px;
+    text-decoration: none;
+    cursor: pointer;
   }
   .name { color: var(--ink); font-size: 14px; letter-spacing: 0.08em; }
   .pfpbox {
@@ -288,7 +290,11 @@
     place-items: center;
     padding: 10px;
     min-height: 0;
+    text-decoration: none;
+    cursor: pointer;
   }
+  .namebox:hover, .pfpbox:hover { filter: brightness(1.15); border-color: var(--red) var(--lo) var(--lo) var(--red); }
+  .pfpbox:hover .pfp { box-shadow: 0 0 12px rgba(255, 74, 61, 0.4); }
   .pfp {
     width: 110px;
     max-width: 26vw;

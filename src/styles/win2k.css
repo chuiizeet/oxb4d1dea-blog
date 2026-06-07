@@ -1,0 +1,141 @@
+/* ===== Look Windows 2000 compartido (editor + panel) ===== */
+.w2k {
+  --face: #d4d0c8;
+  --hl: #ffffff;
+  --sh: #808080;
+  --dk: #404040;
+  --blue1: #0a246a;
+  --blue2: #a6caf0;
+  position: fixed;
+  inset: 0;
+  overflow: auto;
+  background: #14201a url('/login_bg_mobile.png') center / cover no-repeat;
+  image-rendering: pixelated;
+  font-family: Tahoma, 'MS Sans Serif', system-ui, sans-serif;
+  color: #1a1a14;
+  padding: 16px 16px 48px;
+}
+@media (min-width: 700px) {
+  .w2k { background-image: url('/login_bg_desktop.png'); }
+}
+.w2k::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background: repeating-linear-gradient(rgba(0, 0, 0, 0.14) 0 1px, transparent 1px 3px);
+  opacity: 0.4;
+}
+
+/* ventana */
+.w2k .win {
+  position: relative;
+  z-index: 1;
+  background: var(--face);
+  border: 2px solid;
+  border-color: var(--hl) var(--dk) var(--dk) var(--hl);
+  box-shadow: inset -1px -1px 0 var(--sh), inset 1px 1px 0 var(--face), 2px 2px 10px rgba(0, 0, 0, 0.55);
+}
+.w2k .tb {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 3px 3px 8px;
+  background: linear-gradient(90deg, var(--blue1), var(--blue2));
+}
+.w2k .ttl {
+  flex: 1;
+  font-size: 13px;
+  font-weight: bold;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.3);
+}
+.w2k .wbtns { display: flex; gap: 2px; flex: 0 0 auto; }
+.w2k .wb {
+  width: 19px;
+  height: 17px;
+  display: grid;
+  place-items: center;
+  font-size: 11px;
+  line-height: 1;
+  color: #000;
+  background: var(--face);
+  border: 1px solid;
+  border-color: var(--hl) var(--dk) var(--dk) var(--hl);
+  box-shadow: inset -1px -1px 0 var(--sh);
+  cursor: pointer;
+  text-decoration: none;
+}
+
+/* barra de menú decorativa */
+.w2k .menubar {
+  display: flex;
+  gap: 14px;
+  padding: 3px 8px;
+  font-size: 12px;
+  color: #222;
+  border-bottom: 1px solid var(--sh);
+}
+.w2k .menubar u { text-decoration: none; border-bottom: 1px solid #222; }
+
+/* botones */
+.w2k .btn {
+  background: var(--face);
+  color: #000;
+  border: 2px solid;
+  border-color: var(--hl) var(--dk) var(--dk) var(--hl);
+  box-shadow: inset -1px -1px 0 var(--sh);
+  padding: 5px 14px;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+.w2k .btn:active { border-color: var(--dk) var(--hl) var(--hl) var(--dk); box-shadow: inset 1px 1px 0 var(--sh); }
+.w2k .btn:disabled { color: var(--sh); cursor: default; }
+.w2k .btn.primary { font-weight: bold; }
+
+/* campos (hundidos) */
+.w2k input[type='text'],
+.w2k input[type='date'],
+.w2k input[type='password'],
+.w2k select,
+.w2k textarea {
+  background: #fff;
+  color: #000;
+  border: 2px solid;
+  border-color: var(--sh) var(--hl) var(--hl) var(--sh);
+  padding: 5px 6px;
+  font: inherit;
+  font-size: 13px;
+  width: 100%;
+}
+.w2k textarea { resize: vertical; line-height: 1.5; font-family: ui-monospace, 'Courier New', monospace; }
+.w2k label { display: flex; flex-direction: column; gap: 3px; font-size: 12px; color: #222; }
+
+/* panel hundido (listas / preview) */
+.w2k .sunken {
+  background: #fff;
+  border: 2px solid;
+  border-color: var(--sh) var(--hl) var(--hl) var(--sh);
+}
+
+/* barra de tareas */
+.w2k .taskbar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--face);
+  border-top: 2px solid var(--hl);
+  padding: 0 5px;
+  z-index: 100;
+}
+.w2k .tray { border: 1px solid; border-color: var(--sh) var(--hl) var(--hl) var(--sh); padding: 3px 12px; font-size: 13px; }

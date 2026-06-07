@@ -79,3 +79,19 @@ create policy "auth write media" on media
 drop policy if exists "auth all revisions" on revisions;
 create policy "auth all revisions" on revisions
   for all to authenticated using (true) with check (true);
+
+-- ── Perfil (una sola fila): nombre + avatar del menú ───────────────────
+create table if not exists profile (
+  id          boolean primary key default true,
+  name        text not null default 'Chuy',
+  avatar      text not null default '/pfp.jpg',
+  updated_at  timestamptz not null default now(),
+  constraint profile_single check (id)
+);
+insert into profile (id) values (true) on conflict (id) do nothing;
+
+alter table profile enable row level security;
+drop policy if exists "public read profile" on profile;
+create policy "public read profile" on profile for select using (true);
+drop policy if exists "auth write profile" on profile;
+create policy "auth write profile" on profile for all to authenticated using (true) with check (true);

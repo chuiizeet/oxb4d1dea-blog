@@ -3,6 +3,7 @@ import Base from '../layouts/Base.astro';
 import Editor from '../components/Editor.svelte';
 import { getAllEntries } from '../lib/db.js';
 import { CONDITIONS } from '../lib/conditions.js';
+import '../styles/win2k.css';
 
 const rows = await getAllEntries();
 const entries = rows.map((e) => ({

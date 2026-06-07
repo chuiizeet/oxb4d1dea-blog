@@ -16,7 +16,7 @@ if (Astro.request.method === 'POST') {
       maxAge: MAX_AGE,
       secure: import.meta.env.PROD,
     });
-    return Astro.redirect('/editor');
+    return Astro.redirect('/panel');
   }
   error = 'Contraseña incorrecta.';
 }

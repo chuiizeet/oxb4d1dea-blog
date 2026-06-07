@@ -1,11 +1,12 @@
 ---
 import Base from '../layouts/Base.astro';
 import PauseMenu from '../components/PauseMenu.svelte';
-import { getEntries } from '../lib/db.js';
+import { getEntries, getProfile } from '../lib/db.js';
 import { diarioImage } from '../lib/diario.js';
 import { moodToCondition, moodColor } from '../lib/conditions.js';
 
 const all = await getEntries(); // ambos tipos, ordenado por date desc
+const profile = await getProfile();
 
 const fmt = (d) =>
   new Date(d).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' });
@@ -59,6 +60,8 @@ const inventory = [
 <Base title="0xb4d1dea">
   <PauseMenu
     client:load
+    name={profile.name}
+    avatar={profile.avatar}
     entries={entries}
     condition={condition}
     equip={equip}

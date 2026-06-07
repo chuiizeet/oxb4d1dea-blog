@@ -4,7 +4,9 @@ import { verifySession, COOKIE } from './lib/auth.js';
 export function onRequest(context, next) {
   const { url, cookies, redirect } = context;
   const guarded =
-    (url.pathname.startsWith('/editor') || url.pathname.startsWith('/api/')) &&
+    (url.pathname.startsWith('/editor') ||
+      url.pathname.startsWith('/panel') ||
+      url.pathname.startsWith('/api/')) &&
     url.pathname !== '/api/login';
   if (guarded) {
     const ok = verifySession(cookies.get(COOKIE)?.value);

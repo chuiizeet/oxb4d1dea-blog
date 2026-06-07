@@ -80,3 +80,17 @@ export async function addMedia(entryId, kind, url, caption = null) {
     insert into media (entry_id, kind, url, caption)
     values (${entryId}, ${kind}, ${url}, ${caption})`;
 }
+
+// ── perfil (nombre + avatar del menú) ────────────────────────────────────
+export async function getProfile() {
+  const rows = await db()`select name, avatar from profile where id = true limit 1`;
+  return rows[0] ?? { name: 'Chuy', avatar: '/pfp.jpg' };
+}
+
+export async function updateProfile({ name, avatar }) {
+  const [r] = await db()`
+    insert into profile (id, name, avatar) values (true, ${name}, ${avatar})
+    on conflict (id) do update set name = excluded.name, avatar = excluded.avatar, updated_at = now()
+    returning name, avatar`;
+  return r;
+}
