@@ -157,6 +157,7 @@
   }
 
   function restore(rev) {
+    if (!confirm('¿Restaurar esta versión? Reemplaza lo que tienes en el formulario (no se guarda hasta que des Guardar).')) return;
     const s = rev.snapshot || {};
     f = {
       ...f,
@@ -164,6 +165,7 @@
       date: (s.date || '').slice(0, 10) || f.date,
       mood: s.mood || 'fine', exfile: s.exfile ?? 1, image: s.image || '',
       summary: s.summary || '', tags: (s.tags || []).join(', '), body: s.body || '',
+      attachments: (s.attachments || []).map((a) => ({ url: a.url, caption: a.caption || '' })),
     };
     status = 'restaurado (revisa y guarda para confirmar)';
   }

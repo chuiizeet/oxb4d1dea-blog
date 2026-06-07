@@ -10,14 +10,14 @@ export function db() {
 }
 
 export async function getEntries() {
-  return await db()`select * from entries where published = true order by date desc`;
+  return await db()`select * from entries where published = true order by date desc, created_at desc`;
 }
 
 export async function getEntriesByType(type) {
   return await db()`
     select * from entries
     where published = true and type = ${type}
-    order by date desc`;
+    order by date desc, created_at desc`;
 }
 
 export async function getEntry(type, slug) {
@@ -28,7 +28,7 @@ export async function getEntry(type, slug) {
 
 // ── editor ──────────────────────────────────────────────────────────────
 export async function getAllEntries() {
-  return await db()`select * from entries order by date desc`;
+  return await db()`select * from entries order by date desc, created_at desc`;
 }
 
 export async function upsertEntry(data) {

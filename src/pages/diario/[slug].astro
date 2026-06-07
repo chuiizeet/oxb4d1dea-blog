@@ -11,7 +11,11 @@ if (!entry) return new Response(null, { status: 404 });
 
 // número de archivo = posición por fecha ascendente
 const all = await getEntriesByType('diario');
-const asc = [...all].sort((a, b) => new Date(a.date).valueOf() - new Date(b.date).valueOf());
+const asc = [...all].sort(
+  (a, b) =>
+    new Date(a.date).valueOf() - new Date(b.date).valueOf() ||
+    new Date(a.created_at).valueOf() - new Date(b.created_at).valueOf()
+);
 const num = String(asc.findIndex((e) => e.slug === slug) + 1).padStart(2, '0');
 
 const html = renderMarkdown(entry.body ?? '');
