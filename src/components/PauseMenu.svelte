@@ -316,6 +316,7 @@
     letter-spacing: 0.12em;
     padding: 4px 14px;
     cursor: pointer;
+    touch-action: manipulation;
   }
   .tab.active { color: var(--red); text-shadow: 0 0 8px rgba(255, 74, 61, 0.6); }
   .tab:hover { filter: brightness(1.15); }
@@ -613,6 +614,9 @@
     .slots { flex-wrap: wrap; }
     .cond { flex: 1 1 100%; }
     .equip { flex: 1 1 0; }
+    /* tabs como barra tocable en móvil (en desktop quedan chicas a la derecha) */
+    .tabs { gap: 6px; justify-content: stretch; }
+    .tab { flex: 1 1 0; min-height: 44px; padding: 8px 6px; font-size: 13px; }
   }
 
   @media (prefers-reduced-motion: reduce) {
