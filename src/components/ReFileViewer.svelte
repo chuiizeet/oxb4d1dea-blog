@@ -13,9 +13,12 @@
   } = $props();
 
   let editedLabel = $state('');
+  let pagesComputed = $state(pages); // se recalcula en cliente para que ninguna página tenga scroll
+  let contentEl;
+  let measureEl;
 
-  // página 0 = portada (solo EX file); resto = texto sobre el EX file atenuado
-  let items = $derived([{ type: 'cover' }, ...pages.map((html) => ({ type: 'text', html }))]);
+  // página 0 = portada (solo EX file); resto = texto (auto-paginado) sobre el EX file atenuado
+  let items = $derived([{ type: 'cover' }, ...pagesComputed.map((html) => ({ type: 'text', html }))]);
   let total = $derived(Math.max(1, items.length));
 
   let page = $state(0);
@@ -28,12 +31,43 @@
   function next() { if (page < total - 1) page += 1; }
   function prev() { if (page > 0) page -= 1; }
 
+  // parte cada sección en páginas que quepan en pantalla (sin scroll); respeta los ---
+  function paginate() {
+    if (!contentEl || !measureEl) return;
+    const availH = contentEl.clientHeight - 4;
+    if (availH <= 0) return;
+    const m = measureEl;
+    const out = [];
+    for (const section of pages) {
+      m.innerHTML = section;
+      const blocks = Array.from(m.children);
+      m.innerHTML = '';
+      if (!blocks.length) continue;
+      let acc = [];
+      for (const block of blocks) {
+        m.appendChild(block);
+        if (m.scrollHeight > availH && acc.length > 0) {
+          m.removeChild(block);
+          out.push(acc.join(''));
+          acc = [];
+          m.innerHTML = '';
+          m.appendChild(block);
+        }
+        acc.push(block.outerHTML);
+      }
+      if (acc.length) out.push(acc.join(''));
+      m.innerHTML = '';
+    }
+    pagesComputed = out.length ? out : pages;
+    if (page > pagesComputed.length) page = pagesComputed.length;
+  }
+
   function onKey(e) {
     if (showPhotos) {
-      if (e.key === 'Escape') { if (bigPhoto) bigPhoto = null; else showPhotos = false; }
+      if (e.key === 'Escape' || e.key === 'q' || e.key === 'Q') { if (bigPhoto) bigPhoto = null; else showPhotos = false; }
       return;
     }
-    if (e.key === 'Escape') { window.location.href = '/'; return; }   // cerrar archivo
+    if (e.key === 'Escape' || e.key === 'q' || e.key === 'Q') { window.location.href = '/'; return; }   // cerrar archivo
     if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { e.preventDefault(); next(); }
     else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); prev(); }
   }
@@ -45,8 +79,15 @@
         day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit',
       });
     }
+    requestAnimationFrame(() => paginate());
+    let rt;
+    const onResize = () => { clearTimeout(rt); rt = setTimeout(paginate, 150); };
     window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
+    window.addEventListener('resize', onResize);
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      window.removeEventListener('resize', onResize);
+    };
   });
 </script>
 
@@ -68,11 +109,12 @@
     <div class="stage">
       <button class="arrow left" onclick={prev} disabled={page === 0} aria-label="Anterior"></button>
 
-      <div class="content">
+      <div class="content" bind:this={contentEl}>
         {#if image}<img class="bg" class:dim={cur.type === 'text'} src={image} alt={title} />{/if}
         {#if cur.type === 'text'}
           {#key page}<div class="text">{@html cur.html}</div>{/key}
         {/if}
+        <div class="text measure" bind:this={measureEl} aria-hidden="true"></div>
       </div>
 
       <button class="arrow right" onclick={next} disabled={page >= total - 1} aria-label="Siguiente"></button>
@@ -80,7 +122,7 @@
 
     <footer class="ftr">
       <span class="count">{page + 1} / {total}</span>
-      <a class="back" href="/">◄ VOLVER</a>
+      <a class="back" href="/">◄ VOLVER (Q)</a>
     </footer>
   </div>
   <Crt />
@@ -200,9 +242,8 @@
   .text {
     position: relative;
     z-index: 2;
-    max-width: min(620px, 88vw);
-    max-height: 66vh;
-    overflow: auto;
+    width: min(620px, 88vw);
+    overflow: hidden;            /* nunca scroll: el auto-paginador asegura que quepa */
     color: #fff;
     font-size: clamp(18px, 3vw, 26px);
     line-height: 1.7;
@@ -210,6 +251,16 @@
     -webkit-text-stroke: 0.7px #000;
     text-shadow: 1px 1px 0 #000, -1px 1px 0 #000, 0 0 7px rgba(0, 0, 0, 0.95);
     animation: appear 0.3s ease both;
+  }
+  /* clon oculto para medir cuánto texto cabe (auto-paginación) */
+  .text.measure {
+    position: absolute;
+    left: -99999px;
+    top: 0;
+    overflow: visible;
+    visibility: hidden;
+    pointer-events: none;
+    animation: none;
   }
   .text :global(p) { margin: 0 0 1em; }
   .text :global(:last-child) { margin-bottom: 0; }

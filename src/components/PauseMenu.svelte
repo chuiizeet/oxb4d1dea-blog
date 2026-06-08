@@ -135,7 +135,7 @@
       {/if}
       <div class="info">
         <div class="ptitle">{sel.title}</div>
-        <div class="pmeta">{(sel.type ?? '').toUpperCase()} · {sel.dateLabel}</div>
+        <div class="pmeta">{sel.dateLabel}</div>
         {#if sel.summary}<p class="pdesc">{sel.summary}</p>{/if}
       </div>
     {:else}

@@ -207,7 +207,7 @@
             <label class="chk"><input type="checkbox" bind:checked={f.published} /> publicado</label>
           </div>
 
-          <label>Título <input type="text" bind:value={f.title} placeholder="título" /></label>
+          <label>Título <input type="text" bind:value={f.title} placeholder="título" spellcheck="true" lang="es" /></label>
 
           {#if f.type === 'diario'}
             <div class="row">
@@ -226,7 +226,7 @@
               <img class="exprev" src={`/exfiles/${exNN}.png`} alt="" />
             </div>
           {:else}
-            <label>Resumen <input type="text" bind:value={f.summary} placeholder="resumen (blog)" /></label>
+            <label>Resumen <input type="text" bind:value={f.summary} placeholder="resumen (blog)" spellcheck="true" lang="es" /></label>
           {/if}
 
           {#if f.attachments.length}
@@ -274,7 +274,7 @@
                 <span>Cuerpo (markdown)</span>
                 <button class="btn small" type="button" onclick={insertDate}>📅 fecha de hoy</button>
               </div>
-              <textarea bind:this={bodyEl} bind:value={f.body} rows="14" placeholder="escribe aquí…"></textarea>
+              <textarea bind:this={bodyEl} bind:value={f.body} rows="14" placeholder="escribe aquí…" spellcheck="true" lang="es"></textarea>
             </div>
             <div class="bcol">
               <span class="plabel">Vista previa</span>

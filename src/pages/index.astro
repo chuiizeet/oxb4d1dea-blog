@@ -14,8 +14,19 @@ const monthFmt = (d) => {
   const dt = new Date(d);
   return `${dt.toLocaleDateString('es-ES', { month: 'long', timeZone: 'UTC' })} ${dt.getUTCFullYear()}`;
 };
-const excerpt = (md = '') =>
-  md.replace(/[#>*_`\-]/g, '').replace(/\s+/g, ' ').trim().slice(0, 110);
+const excerpt = (md = '') => {
+  const clean = (md || '')
+    .replace(/^[ \t]*@fecha:.*$/gim, '')        // marcadores de fecha
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, '')        // imágenes markdown
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')     // links -> texto
+    .replace(/<[^>]+>/g, '')                     // html (video, etc.)
+    .replace(/^[ \t]*[-*+]\s+/gm, '')            // viñetas
+    .replace(/[#>*_`~]/g, '')                    // símbolos markdown
+    .replace(/-{3,}/g, ' ')                      // --- (saltos de página)
+    .replace(/\s+/g, ' ')
+    .trim();
+  return clean.length > 280 ? clean.slice(0, 280).trimEnd() + '…' : clean;
+};
 
 // estado del menú: fijo (elegido en el perfil) o automático (último diario)
 const latestDiario = all.find((e) => e.type === 'diario');
