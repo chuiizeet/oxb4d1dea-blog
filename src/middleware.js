@@ -6,6 +6,7 @@ export function onRequest(context, next) {
   const guarded =
     (url.pathname.startsWith('/editor') ||
       url.pathname.startsWith('/panel') ||
+      url.pathname.startsWith('/items') ||
       url.pathname.startsWith('/api/')) &&
     url.pathname !== '/api/login';
   if (guarded) {

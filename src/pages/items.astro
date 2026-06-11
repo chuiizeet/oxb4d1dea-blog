@@ -1,0 +1,28 @@
+---
+import Base from '../layouts/Base.astro';
+import ItemsEditor from '../components/ItemsEditor.svelte';
+import { getSectionsFull } from '../lib/db.js';
+import '../styles/win2k.css';
+
+const sections = (await getSectionsFull()).map((s) => ({
+  id: s.id,
+  label: s.label,
+  icon: s.icon,
+  position: s.position,
+  published: s.published,
+  items: s.items.map((it) => ({
+    id: it.id,
+    title: it.title,
+    sub: it.sub,
+    description: it.description,
+    cover: it.cover,
+    url: it.url,
+    current: it.current,
+    started_at: new Date(it.started_at).toISOString(),
+  })),
+}));
+---
+
+<Base title="Items">
+  <ItemsEditor client:load sections={sections} />
+</Base>

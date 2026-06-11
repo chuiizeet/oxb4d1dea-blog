@@ -102,3 +102,77 @@ alter table entries add column if not exists attachments jsonb not null default 
 
 -- status del menú: 'auto' (según el último diario) o un id de condition fijo
 alter table profile add column if not exists status text not null default 'auto';
+
+-- ── ITEMS del inventario (libro/álbum/juego…) + su historial ───────────
+create table if not exists items (
+  id          uuid primary key default gen_random_uuid(),
+  title       text not null default '',
+  sub         text not null default '',
+  description text not null default '',
+  cover       text not null default '',
+  url         text not null default '',
+  icon        text not null default '',
+  position    int  not null default 0,
+  published   boolean not null default true,
+  created_at  timestamptz not null default now(),
+  updated_at  timestamptz not null default now()
+);
+create index if not exists items_position_idx on items (position, created_at);
+
+create table if not exists item_revisions (
+  id          uuid primary key default gen_random_uuid(),
+  item_id     uuid references items(id) on delete cascade,
+  snapshot    jsonb not null,
+  note        text,
+  created_at  timestamptz not null default now()
+);
+create index if not exists item_revisions_idx on item_revisions (item_id, created_at desc);
+
+drop trigger if exists items_updated_at on items;
+create trigger items_updated_at before update on items
+  for each row execute function set_updated_at();
+
+alter table items          enable row level security;
+alter table item_revisions enable row level security;
+drop policy if exists "public read items" on items;
+create policy "public read items" on items for select using (published = true);
+drop policy if exists "auth write items" on items;
+create policy "auth write items" on items for all to authenticated using (true) with check (true);
+drop policy if exists "auth item_revisions" on item_revisions;
+create policy "auth item_revisions" on item_revisions for all to authenticated using (true) with check (true);
+
+-- seed inicial (solo si no hay items)
+insert into items (title, sub, description, icon, position)
+select * from (values
+  ('Libro actual', '(autor)', '', '📖', 0),
+  ('Álbum del momento', '(artista)', '', '💿', 1),
+  ('Jugando', '(juego)', '', '🎮', 2)
+) as v(title, sub, description, icon, position)
+where not exists (select 1 from items);
+
+-- ── SECCIONES (slots del inventario: Libro/Álbum/Juego…) ───────────────
+-- Cada sección tiene un item "actual" + items anteriores (archivados).
+create table if not exists sections (
+  id          uuid primary key default gen_random_uuid(),
+  label       text not null default '',
+  icon        text not null default '',
+  position    int  not null default 0,
+  published   boolean not null default true,
+  created_at  timestamptz not null default now(),
+  updated_at  timestamptz not null default now()
+);
+create index if not exists sections_position_idx on sections (position, created_at);
+drop trigger if exists sections_updated_at on sections;
+create trigger sections_updated_at before update on sections
+  for each row execute function set_updated_at();
+alter table sections enable row level security;
+drop policy if exists "public read sections" on sections;
+create policy "public read sections" on sections for select using (published = true);
+drop policy if exists "auth write sections" on sections;
+create policy "auth write sections" on sections for all to authenticated using (true) with check (true);
+
+-- items ahora pertenecen a una sección y pueden ser actual o archivados
+alter table items add column if not exists section_id uuid references sections(id) on delete cascade;
+alter table items add column if not exists current boolean not null default true;
+alter table items add column if not exists started_at timestamptz not null default now();
+create index if not exists items_section_idx on items (section_id, current, started_at desc);

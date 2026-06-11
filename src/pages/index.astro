@@ -1,12 +1,13 @@
 ---
 import Base from '../layouts/Base.astro';
 import PauseMenu from '../components/PauseMenu.svelte';
-import { getEntries, getProfile } from '../lib/db.js';
+import { getEntries, getProfile, getInventory } from '../lib/db.js';
 import { diarioImage } from '../lib/diario.js';
 import { moodToCondition, moodColor } from '../lib/conditions.js';
 
 const all = await getEntries(); // ambos tipos, ordenado por date desc
 const profile = await getProfile();
+const slots = await getInventory();
 
 const fmt = (d) =>
   new Date(d).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' });
@@ -64,11 +65,14 @@ const entries = all.map((e) =>
 // inventario "del momento" (placeholders por ahora)
 const equip = { art: '' };
 const item = { title: '', artist: '', cover: '', url: '' };
-const inventory = [
-  { label: 'Libro actual', sub: '(autor)', cover: '', url: '', icon: '📖' },
-  { label: 'Álbum del momento', sub: '(artista)', cover: '', url: '', icon: '💿' },
-  { label: 'Jugando', sub: '(juego)', cover: '', url: '', icon: '🎮' },
-];
+const inventory = slots.map((s) => ({
+  label: s.title || s.label, // si la sección no tiene item actual, muestra su nombre
+  sub: s.sub || '',
+  desc: s.description || '',
+  cover: s.cover || '',
+  url: s.url || '',
+  icon: s.icon || '',
+}));
 ---
 
 <Base title="0xb4d1dea">

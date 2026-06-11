@@ -16,6 +16,8 @@
   let tab = $state('diario'); // diario | blog | items
   let list = $derived(tab === 'items' ? inventory : entries.filter((e) => e.type === tab));
   let sel = $state(entries.find((e) => e.type === 'diario') ?? entries[0] ?? null);
+  let zoom = $state(null); // imagen del item ampliada (lightbox)
+  function onKeydown(e) { if (e.key === 'Escape') { zoom = null; showSettings = false; } }
   $effect(() => {
     sel = list[0] ?? null;
   });
@@ -55,6 +57,8 @@
 
   let cond = $derived(CONDITIONS[condition] ?? CONDITIONS.fine);
 </script>
+
+<svelte:window onkeydown={onKeydown} />
 
 <div class="menu" class:itemsview={tab === 'items'}>
   <!-- consola: portrait (alto) + tabs (arriba) + slots (condition/equip/item) -->
@@ -118,7 +122,7 @@
   <section class="preview panel" aria-live="polite">
     {#if sel?.label}
       {#if sel.cover}
-        <div class="thumb"><img src={sel.cover} alt="" loading="lazy" /></div>
+        <button type="button" class="thumb thumb-item" onclick={() => (zoom = sel.cover)} aria-label="Ver imagen en grande"><img src={sel.cover} alt="" loading="lazy" /></button>
       {:else}
         <div class="thumb empty"><span>{sel.icon ?? '▤'}</span></div>
       {/if}
@@ -126,6 +130,7 @@
         <div class="ptitle">{sel.label}</div>
         {#if sel.sub}<div class="pmeta">{sel.sub}</div>{/if}
         {#if sel.desc}<p class="pdesc">{sel.desc}</p>{/if}
+        {#if sel.url}<a class="plink" href={sel.url} target="_blank" rel="noopener">🔗 Link ↗</a>{/if}
       </div>
     {:else if sel?.title}
       {#if sel.image}
@@ -149,12 +154,11 @@
       {#each Array.from({ length: 8 }) as _, i}
         {@const it = inventory[i]}
         {#if it}
-          <a
+          <button
+            type="button"
             class="islot panel"
             class:sel={sel === it}
-            href={it.url || undefined}
-            target={it.url ? '_blank' : undefined}
-            rel="noopener"
+            onclick={() => (sel = it)}
             onmouseenter={() => (sel = it)}
             onfocus={() => (sel = it)}
             aria-label={it.label}
@@ -164,7 +168,7 @@
             {:else}
               <span class="ph">{it.icon ?? '▤'}</span>
             {/if}
-          </a>
+          </button>
         {:else}
           <div class="islot panel empty" aria-hidden="true"></div>
         {/if}
@@ -219,6 +223,13 @@
         </div>
         <button class="setexit" onclick={() => (showSettings = false)}>◄ CERRAR</button>
       </div>
+    </div>
+  {/if}
+
+  {#if zoom}
+    <div class="zoom" role="dialog" onclick={() => (zoom = null)}>
+      <img src={zoom} alt="" />
+      <button class="zclose" onclick={() => (zoom = null)}>✕</button>
     </div>
   {/if}
 </div>
@@ -434,11 +445,21 @@
     overflow: hidden;
   }
   .thumb img { width: 100%; height: 100%; object-fit: cover; }
+  /* item en details: imagen completa (scaleToFit), centrada, con margen e inclinada 30° */
+  .thumb-item { overflow: hidden; appearance: none; -webkit-appearance: none; font: inherit; cursor: zoom-in; }
+  .thumb-item img { width: auto; height: auto; max-width: 60%; max-height: 60%; object-fit: contain; transform: rotate(30deg); }
+  /* lightbox de la imagen del item */
+  .zoom { position: fixed; inset: 0; z-index: 200; background: rgba(0, 0, 0, 0.92); display: grid; place-items: center; padding: 24px; cursor: zoom-out; }
+  .zoom img { max-width: 92vw; max-height: 88vh; object-fit: contain; box-shadow: 0 12px 48px rgba(0, 0, 0, 0.7); }
+  .zclose { position: fixed; top: 14px; right: 16px; background: transparent; border: 1px solid var(--lo); color: var(--ink); font: inherit; font-size: 13px; padding: 6px 12px; cursor: pointer; }
+  .zclose:hover { background: rgba(255, 255, 255, 0.08); }
   .thumb.empty span { font-size: 34px; color: var(--muted); }
   .info { min-width: 0; }
   .ptitle { color: var(--ink); font-size: 16px; margin-bottom: 4px; }
   .pmeta { color: var(--green); font-size: 11px; letter-spacing: 0.12em; margin-bottom: 8px; }
   .pdesc { color: var(--muted); font-size: 13px; line-height: 1.5; margin: 0; }
+  .plink { display: inline-block; margin-top: 12px; color: var(--amber); font-size: 13px; letter-spacing: 0.06em; text-decoration: none; border-bottom: 1px solid currentColor; }
+  .plink:hover { filter: brightness(1.2); }
 
   /* ---- grilla de ítems ---- */
   .grid {
@@ -518,8 +539,14 @@
     text-decoration: none;
     color: var(--ink);
     min-width: 0;
+    width: 100%;
+    padding: 0;
+    appearance: none;
+    -webkit-appearance: none;
+    font: inherit;
+    cursor: pointer;
   }
-  .islot img { width: 100%; height: 100%; object-fit: cover; }
+  .islot img { max-width: 74%; max-height: 74%; object-fit: contain; }
   .islot .ph { color: var(--muted); font-size: 28px; }
   .islot.empty { opacity: 0.45; }
   .islot:hover,

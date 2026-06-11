@@ -110,3 +110,92 @@ export async function updateProfile({ name, avatar, status }) {
     returning name, avatar, status`;
   return r;
 }
+
+// ── secciones (slots) + items (actual/archivados) con historial ──────────
+// home: una fila por sección publicada con su item actual
+export async function getInventory() {
+  return await db()`
+    select s.id as section_id, s.label, s.icon, s.position,
+           i.title, i.sub, i.description, i.cover, i.url
+    from sections s
+    left join items i on i.section_id = s.id and i.current = true
+    where s.published = true
+    order by s.position, s.created_at`;
+}
+
+// editor: todas las secciones con todos sus items (actual primero, luego archivados)
+export async function getSectionsFull() {
+  const sections = await db()`select * from sections order by position, created_at`;
+  const items = await db()`select * from items order by current desc, started_at desc, created_at desc`;
+  return sections.map((s) => ({ ...s, items: items.filter((it) => it.section_id === s.id) }));
+}
+
+export async function upsertSection(data) {
+  const s = db();
+  const v = {
+    label: data.label ?? '',
+    icon: data.icon ?? '',
+    position: Number.isFinite(data.position) ? data.position : 0,
+    published: data.published ?? true,
+  };
+  let saved;
+  if (data.id) {
+    [saved] = await s`update sections set label=${v.label}, icon=${v.icon}, position=${v.position}, published=${v.published} where id=${data.id} returning *`;
+  } else {
+    [saved] = await s`insert into sections (label, icon, position, published) values (${v.label}, ${v.icon}, ${v.position}, ${v.published}) returning *`;
+  }
+  return saved;
+}
+export async function deleteSection(id) {
+  await db()`delete from sections where id = ${id}`; // items + revisiones caen en cascada
+}
+
+const ITEM_FIELDS = (data) => ({
+  title: data.title ?? '',
+  sub: data.sub ?? '',
+  description: data.description ?? '',
+  cover: data.cover ?? '',
+  url: data.url ?? '',
+});
+
+// editar el item actual (mismo libro): solo cambia sus campos
+export async function updateItem(itemId, data) {
+  const v = ITEM_FIELDS(data);
+  const [saved] = await db()`
+    update items set title=${v.title}, sub=${v.sub}, description=${v.description}, cover=${v.cover}, url=${v.url}
+    where id=${itemId} returning *`;
+  return saved;
+}
+
+// cambiar de item (libro nuevo): archiva el actual e inserta uno nuevo como actual
+export async function changeItem(sectionId, data) {
+  const s = db();
+  const v = ITEM_FIELDS(data);
+  await s`update items set current=false where section_id=${sectionId} and current=true`;
+  const [saved] = await s`
+    insert into items (section_id, title, sub, description, cover, url, current, started_at)
+    values (${sectionId}, ${v.title}, ${v.sub}, ${v.description}, ${v.cover}, ${v.url}, true, now())
+    returning *`;
+  return saved;
+}
+
+// volver a poner como actual un item archivado
+export async function setCurrentItem(sectionId, itemId) {
+  const s = db();
+  await s`update items set current=false where section_id=${sectionId} and current=true`;
+  const [saved] = await s`update items set current=true, started_at=now() where id=${itemId} returning *`;
+  return saved;
+}
+
+export async function deleteItem(id) {
+  await db()`delete from items where id = ${id}`; // item_revisions caen en cascada
+}
+export async function addItemRevision(itemId, snapshot, note = null) {
+  const s = db();
+  await s`insert into item_revisions (item_id, snapshot, note) values (${itemId}, ${s.json(snapshot)}, ${note})`;
+}
+export async function getItemRevisions(itemId) {
+  return await db()`
+    select id, created_at, note, snapshot from item_revisions
+    where item_id = ${itemId} order by created_at desc`;
+}

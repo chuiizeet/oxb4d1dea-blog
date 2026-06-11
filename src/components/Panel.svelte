@@ -89,6 +89,7 @@
 
       <div class="links">
         <a class="link" href="/editor">✍ Editar diario / blog</a>
+        <a class="link" href="/items">📦 Editar items</a>
         <a class="link" href="/">🏠 Ver el sitio</a>
         <a class="link out" href="/logout">⏻ Cerrar sesión</a>
       </div>
