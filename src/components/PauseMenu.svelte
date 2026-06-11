@@ -158,9 +158,7 @@
             type="button"
             class="islot panel"
             class:sel={sel === it}
-            onclick={() => (sel = it)}
-            onmouseenter={() => (sel = it)}
-            onfocus={() => (sel = it)}
+            onclick={() => { if (sel === it) { if (it.cover) zoom = it.cover; } else sel = it; }}
             aria-label={it.label}
           >
             {#if it.cover}

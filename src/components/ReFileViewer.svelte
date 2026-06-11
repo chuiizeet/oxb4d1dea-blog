@@ -351,9 +351,12 @@
   .lbclose { position: fixed; top: 14px; right: 18px; padding: 5px 12px; }
 
   @media (max-width: 560px) {
-    .arrow.left { border-width: 20px 26px 20px 0; }
-    .arrow.right { border-width: 20px 0 20px 26px; }
-    .stage { gap: 10px; }
+    .arrow.left { border-width: 18px 22px 18px 0; }
+    .arrow.right { border-width: 18px 0 18px 22px; }
+    .stage { gap: 16px; }
+    /* el texto ocupa el espacio entre las flechas (no 88vw) -> no se encima */
+    .text, .text.measure { width: 100%; }
+    .hdr { margin-bottom: 10px; }
   }
   @media (prefers-reduced-motion: reduce) {
     .screen, .text, .arrow { transition: none; animation: none; }
