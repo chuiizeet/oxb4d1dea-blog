@@ -229,7 +229,7 @@
     position: absolute;
     inset: 0;
     margin: auto;
-    max-width: 100%;
+    max-width: 82%;
     max-height: min(62vh, 600px);
     object-fit: contain;
     filter: drop-shadow(0 18px 40px rgba(0, 0, 0, 0.8));

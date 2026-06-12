@@ -134,7 +134,7 @@
       </div>
     {:else if sel?.title}
       {#if sel.image}
-        <div class="thumb"><img src={sel.image} alt="" loading="lazy" /></div>
+        <div class="thumb thumb-ex"><img src={sel.image} alt="" loading="lazy" /></div>
       {:else}
         <div class="thumb empty"><span>{sel.type === 'diario' ? '✎' : '▤'}</span></div>
       {/if}
@@ -183,7 +183,7 @@
             onmouseenter={() => (sel = e)}
             onfocus={() => (sel = e)}
           >
-            <span class="glyph">
+            <span class="glyph" class:img={e.image}>
               {#if e.image}
                 <img src={e.image} alt="" loading="lazy" />
               {:else}
@@ -407,13 +407,24 @@
   .value { color: var(--c, var(--green)); font-size: 15px; letter-spacing: 0.12em; text-shadow: 0 0 8px var(--c, var(--green)); }
 
   .equip .cell {
+    position: relative; /* contiene la imagen sin que su alto crezca la fila */
     flex: 1;
     display: grid;
     place-items: center;
     overflow: hidden;
-    min-height: 34px;
+    min-height: 0;
   }
-  .equip .cell img { max-width: 100%; max-height: 100%; object-fit: contain; image-rendering: pixelated; }
+  .equip .cell img {
+    position: absolute;
+    inset: 4px;
+    margin: auto;
+    max-width: calc(100% - 8px);
+    max-height: calc(100% - 8px);
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    image-rendering: pixelated;
+  }
   .ph { color: var(--muted); font-size: 24px; }
 
   .item {
@@ -448,6 +459,8 @@
     overflow: hidden;
   }
   .thumb img { width: 100%; height: 100%; object-fit: cover; }
+  /* EX file en el preview: conserva el fondo/caja, imagen completa (no recortada) y con margen */
+  .thumb-ex img { width: auto; height: auto; max-width: 82%; max-height: 86%; object-fit: contain; image-rendering: pixelated; }
   /* item en details: imagen completa (scaleToFit), centrada, con margen e inclinada 30° */
   .thumb-item { overflow: hidden; appearance: none; -webkit-appearance: none; font: inherit; cursor: zoom-in; }
   .thumb-item img { width: auto; height: auto; max-width: 60%; max-height: 60%; object-fit: contain; transform: rotate(30deg); }
@@ -518,6 +531,9 @@
     border: 1px solid var(--lo);
   }
   .slot .glyph img { width: 100%; height: 100%; object-fit: cover; }
+  /* EX file transparente: sin cuadro, se ve el PNG completo */
+  .slot .glyph.img { background: transparent; border-color: transparent; overflow: visible; }
+  .slot .glyph.img img { object-fit: contain; image-rendering: pixelated; }
   .slot .stitle { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .slot .smeta {
     color: var(--muted);
