@@ -10,6 +10,7 @@ const sections = (await getSectionsFull()).map((s) => ({
   icon: s.icon,
   position: s.position,
   published: s.published,
+  slot: s.slot ?? 'grid',
   items: s.items.map((it) => ({
     id: it.id,
     title: it.title,
