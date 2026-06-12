@@ -91,10 +91,10 @@
         </div>
       </div>
 
-      <div class="equip panel">
+      <div class="equip panel" title={equip?.title || undefined}>
         <div class="cell">
           {#if equip?.art}
-            <img src={equip.art} alt="" />
+            <img src={equip.art} alt={equip.title ?? ''} />
           {:else}
             <span class="ph">▦</span>
           {/if}
@@ -191,7 +191,10 @@
               {/if}
             </span>
             <span class="stitle">{e.title}</span>
-            <span class="smeta">{e.type} · {e.dateLabel}</span>
+            <span class="smeta">
+              <span class="sdate">{e.dateLabel}</span>
+              {#if e.updatedLabel}<span class="supd">act. {e.updatedLabel}</span>{/if}
+            </span>
           </a>
         {/each}
       {/each}
@@ -385,6 +388,8 @@
   .cond .srow { position: relative; z-index: 1; }
   @keyframes condbreathe { 0%, 100% { opacity: 0.28; } 50% { opacity: 0.95; } }
   .ecg { width: 100%; height: 34px; }
+  /* centra el latido en el espacio de arriba; la etiqueta cae al fondo (alineada con EQUIP) */
+  .cond .ecg { margin-block: auto; }
   .ecg polyline {
     fill: none;
     stroke: var(--c, var(--green));
@@ -514,7 +519,17 @@
   }
   .slot .glyph img { width: 100%; height: 100%; object-fit: cover; }
   .slot .stitle { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .slot .smeta { color: var(--muted); font-size: 11px; letter-spacing: 0.06em; }
+  .slot .smeta {
+    color: var(--muted);
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+    text-align: right;
+  }
+  .slot .smeta .supd { font-size: 10px; opacity: 0.7; }
   .slot:hover,
   .slot:focus-visible,
   .slot.sel {

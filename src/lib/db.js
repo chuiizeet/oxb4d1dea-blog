@@ -115,7 +115,7 @@ export async function updateProfile({ name, avatar, status }) {
 // home: una fila por sección publicada con su item actual
 export async function getInventory() {
   return await db()`
-    select s.id as section_id, s.label, s.icon, s.position,
+    select s.id as section_id, s.label, s.icon, s.position, s.slot,
            i.title, i.sub, i.description, i.cover, i.url
     from sections s
     left join items i on i.section_id = s.id and i.current = true
@@ -140,9 +140,10 @@ export async function upsertSection(data) {
   };
   let saved;
   if (data.id) {
-    [saved] = await s`update sections set label=${v.label}, icon=${v.icon}, position=${v.position}, published=${v.published} where id=${data.id} returning *`;
+    // coalesce: si el editor no manda slot, se conserva el actual (grid/equip/disc)
+    [saved] = await s`update sections set label=${v.label}, icon=${v.icon}, position=${v.position}, published=${v.published}, slot=coalesce(${data.slot ?? null}, slot) where id=${data.id} returning *`;
   } else {
-    [saved] = await s`insert into sections (label, icon, position, published) values (${v.label}, ${v.icon}, ${v.position}, ${v.published}) returning *`;
+    [saved] = await s`insert into sections (label, icon, position, published, slot) values (${v.label}, ${v.icon}, ${v.position}, ${v.published}, ${data.slot ?? 'grid'}) returning *`;
   }
   return saved;
 }

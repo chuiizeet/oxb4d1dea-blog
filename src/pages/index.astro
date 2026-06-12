@@ -15,6 +15,12 @@ const monthFmt = (d) => {
   const dt = new Date(d);
   return `${dt.toLocaleDateString('es-ES', { month: 'long', timeZone: 'UTC' })} ${dt.getUTCFullYear()}`;
 };
+// "última actualización": fecha + hora en hora local (CDMX)
+const updFmt = (d) =>
+  new Date(d).toLocaleString('es-ES', {
+    day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit',
+    hour12: false, timeZone: 'America/Mexico_City',
+  });
 const excerpt = (md = '') => {
   const clean = (md || '')
     .replace(/^[ \t]*@fecha:.*$/gim, '')        // marcadores de fecha
@@ -43,7 +49,9 @@ const entries = all.map((e) =>
         title: e.title,
         date: new Date(e.date).toISOString(),
         dateLabel: fmt(e.date),
-        monthLabel: monthFmt(e.date),
+        monthLabel: monthFmt(e.updated_at),
+        updatedAt: new Date(e.updated_at).toISOString(),
+        updatedLabel: updFmt(e.updated_at),
         summary: excerpt(e.body),
         image: diarioImage(e),
         mood: e.mood ?? '',
@@ -55,24 +63,33 @@ const entries = all.map((e) =>
         title: e.title,
         date: new Date(e.date).toISOString(),
         dateLabel: fmt(e.date),
-        monthLabel: monthFmt(e.date),
+        monthLabel: monthFmt(e.updated_at),
+        updatedAt: new Date(e.updated_at).toISOString(),
+        updatedLabel: updFmt(e.updated_at),
         summary: e.summary ?? excerpt(e.body),
         image: '',
         href: `/blog/${e.slug}`,
       }
 );
 
-// inventario "del momento" (placeholders por ahora)
-const equip = { art: '' };
-const item = { title: '', artist: '', cover: '', url: '' };
-const inventory = slots.map((s) => ({
-  label: s.title || s.label, // si la sección no tiene item actual, muestra su nombre
-  sub: s.sub || '',
-  desc: s.description || '',
-  cover: s.cover || '',
-  url: s.url || '',
-  icon: s.icon || '',
-}));
+// la lista se ordena por última actualización (lo más reciente, arriba)
+entries.sort((a, b) => (a.updatedAt < b.updatedAt ? 1 : a.updatedAt > b.updatedAt ? -1 : 0));
+
+// secciones del header (con su propio historial) vs rejilla de items
+const equipSec = slots.find((s) => s.slot === 'equip');
+const discSec = slots.find((s) => s.slot === 'disc');
+const equip = { art: equipSec?.cover || '', title: equipSec?.title || '', url: equipSec?.url || '' };
+const item = { title: discSec?.title || '', cover: discSec?.cover || '', url: discSec?.url || '' };
+const inventory = slots
+  .filter((s) => (s.slot ?? 'grid') === 'grid')
+  .map((s) => ({
+    label: s.title || s.label, // si la sección no tiene item actual, muestra su nombre
+    sub: s.sub || '',
+    desc: s.description || '',
+    cover: s.cover || '',
+    url: s.url || '',
+    icon: s.icon || '',
+  }));
 ---
 
 <Base title="0xb4d1dea">

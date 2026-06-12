@@ -147,7 +147,7 @@
             {#each secs as s}
               <button class="erow" class:on={selSec?.id === s.id} onclick={() => selectSection(s)}>
                 <span class="ic">{s.icon || '▤'}</span>
-                <span class="t">{s.label || '(sección)'}</span>
+                <span class="t">{s.label || '(sección)'}{#if s.slot && s.slot !== 'grid'} <em class="hdr">header</em>{/if}</span>
                 <span class="m">{s.items.length}</span>
               </button>
             {/each}
@@ -245,6 +245,8 @@
   .erow:hover, .erow.on { background: #0a246a; color: #fff; }
   .erow .ic { flex: 0 0 auto; }
   .erow .t { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .erow .hdr { font-style: normal; font-size: 9px; background: #c8a000; color: #000; padding: 0 4px; border-radius: 2px; vertical-align: middle; }
+  .erow:hover .hdr, .erow.on .hdr { background: #ffd84a; }
   .erow .m { color: #888; font-size: 11px; }
   .erow:hover .m, .erow.on .m { color: #c9d4ee; }
   .logout { color: #0a246a; font-size: 12px; }

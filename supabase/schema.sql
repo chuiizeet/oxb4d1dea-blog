@@ -176,3 +176,13 @@ alter table items add column if not exists section_id uuid references sections(i
 alter table items add column if not exists current boolean not null default true;
 alter table items add column if not exists started_at timestamptz not null default now();
 create index if not exists items_section_idx on items (section_id, current, started_at desc);
+
+-- ── slot: dónde se muestra la sección ──────────────────────────────────
+-- 'grid' (rejilla de items, por defecto) | 'equip' | 'disc' (slots del header del menú)
+alter table sections add column if not exists slot text not null default 'grid';
+
+-- slots fijos del header (EQUIP + disco), con su propio historial. Solo en el header.
+insert into sections (label, icon, position, slot)
+select 'Equip', '🎒', 10, 'equip' where not exists (select 1 from sections where slot = 'equip');
+insert into sections (label, icon, position, slot)
+select 'Disco', '📀', 11, 'disc' where not exists (select 1 from sections where slot = 'disc');
