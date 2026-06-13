@@ -642,8 +642,8 @@
   .about p { margin: 0 0 8px; font-size: 15px; line-height: 1.6; color: #d8c2bc; }
   .setexit { display: block; margin: 24px auto 0; }
 
-  /* ---- desktop: dos columnas ---- */
-  @media (min-width: 860px) {
+  /* ---- desktop (y landscape de celular): dos columnas ---- */
+  @media (min-width: 860px), (orientation: landscape) and (max-height: 540px) {
     .menu {
       grid-template-columns: minmax(320px, 1.5fr) minmax(0, 1fr);
       grid-template-rows: auto minmax(0, 1fr);
@@ -664,6 +664,16 @@
       justify-content: end;
       align-content: start;
     }
+  }
+
+  /* ---- landscape de celular: caja 4:3 que cabe en pantalla, sin deformar ni scroll ---- */
+  @media (orientation: landscape) and (max-height: 540px) {
+    .menu { height: 100dvh; min-height: 0; overflow: hidden; padding: 8px 12px; gap: 8px; }
+    .console { gap: 4px 8px; }
+    .pfp { width: clamp(54px, 18dvh, 84px); }
+    .namebox { padding: 3px; }
+    .name { font-size: 12px; }
+    .info { overflow: auto; }
   }
 
   /* ---- móvil: portrait horizontal, slots envuelven ---- */
