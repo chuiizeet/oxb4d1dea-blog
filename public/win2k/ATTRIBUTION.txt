@@ -1,0 +1,9 @@
+Iconos del tema Windows (barras de título y placeholders).
+
+Fuente: WinClassic_icons / tema "Redmond97"
+https://github.com/matthewmx86/WinClassic_icons
+Derivado del tema de iconos Chicago95 (licencia GPL), mezcla de iconos
+estilo Windows 98 / Windows 2000.
+
+Archivos usados (renombrados): terminal, cd, keyboard, help, editor,
+prefs, folder, file, image (no se usa start-here: era el pingüino Tux).

@@ -158,7 +158,7 @@
 <div class="desktop">
   {#if showProgram}
     <div class="win program" class:shake={phase === 'denied'} use:draggable>
-      <div class="tb"><span class="ttl">PROGRAM ( 1:1 )</span><span class="wbtns"><span class="wb">_</span><span class="wb">▢</span><span class="wb x">✕</span></span></div>
+      <div class="tb"><img class="ttlico" src="/win2k/terminal.png" alt="" /><span class="ttl">PROGRAM ( 1:1 )</span><span class="wbtns"><span class="wb">_</span><span class="wb">▢</span><span class="wb x">✕</span></span></div>
       <div class="body screen">
         <div class="ln big">UMBRELLA "RODEM" SYSTEM<span class="ver">Ver 5.0</span></div>
         <div class="ln big">Culture Experiment Room Staff Registry.</div>
@@ -191,7 +191,7 @@
 
   {#if showCd}
     <div class="win cd" use:draggable>
-      <div class="tb"><span class="ttl">repeat cdsystem</span><span class="wbtns"><span class="wb">_</span><span class="wb">▢</span><span class="wb x" onclick={() => (showCd = false)}>✕</span></span></div>
+      <div class="tb"><img class="ttlico" src="/win2k/cd.png" alt="" /><span class="ttl">repeat cdsystem</span><span class="wbtns"><span class="wb">_</span><span class="wb">▢</span><span class="wb x" onclick={() => (showCd = false)}>✕</span></span></div>
       <div class="body cdbody">
         <img class="cover" src="/login_bg_mobile.png" alt="" />
         <div class="cdinfo">
@@ -210,7 +210,7 @@
 
   {#if showKbd}
     <div class="win keyboard" use:draggable>
-      <div class="tb"><span class="ttl">KEYBOARD ( 1:1 )</span><span class="wbtns"><span class="wb">_</span><span class="wb">▢</span><span class="wb x" onclick={() => (showKbd = false)}>✕</span></span></div>
+      <div class="tb"><img class="ttlico" src="/win2k/keyboard.png" alt="" /><span class="ttl">KEYBOARD ( 1:1 )</span><span class="wbtns"><span class="wb">_</span><span class="wb">▢</span><span class="wb x" onclick={() => (showKbd = false)}>✕</span></span></div>
       <div class="body kb">
         {#each ROWS as row}
           <div class="krow">
@@ -225,17 +225,17 @@
 
   {#if showAbout}
     <div class="win about" use:draggable>
-      <div class="tb"><span class="ttl">Acerca de</span><span class="wbtns"><span class="wb x" onclick={() => (showAbout = false)}>✕</span></span></div>
+      <div class="tb"><img class="ttlico" src="/win2k/help.png" alt="" /><span class="ttl">Acerca de</span><span class="wbtns"><span class="wb x" onclick={() => (showAbout = false)}>✕</span></span></div>
       <div class="body abody">
-        <p><b>UMBRELLA "RODEM" SYSTEM</b><br />blog &amp; diario de Chuy</p>
-        <p>Homenaje a Resident Evil 2.<br />Fondo: <i>The Queen Is Dead</i> 🎸</p>
+        <p><b>BULLSHIT SYSTEM</b><br />Blog &amp; diario de un humano mas</p>
+        <p>Leave me alone<br /><i>Creado para suplir la asquerosa necesidad de expresarme de una manera genuina a veces con falta de inspiracion, idealidad o cualquiera de esas mamadas</i></p>
         <button class="repeat" type="button" onclick={() => (showAbout = false)}>Aceptar</button>
       </div>
     </div>
   {/if}
 
   <div class="taskbar">
-    <button class="file" class:on={showMenu} onclick={() => (showMenu = !showMenu)}>▣ File</button>
+    <button class="file" class:on={showMenu} onclick={() => (showMenu = !showMenu)}><img class="startico" src="/win2k/start.png" alt="" />File</button>
     <div class="tray">{clock}</div>
   </div>
 
@@ -294,6 +294,8 @@
     background: linear-gradient(90deg, var(--blue1), var(--blue2)); cursor: default; touch-action: none;
   }
   .ttl { flex: 1; font-size: 13px; font-weight: bold; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: 0 1px 0 rgba(0, 0, 0, 0.3); }
+  .ttlico { width: 16px; height: 16px; flex: 0 0 auto; image-rendering: pixelated; }
+  .startico { width: 16px; height: 16px; image-rendering: pixelated; }
   .wbtns { display: flex; gap: 2px; flex: 0 0 auto; }
   .wb {
     width: 19px; height: 17px; display: grid; place-items: center; font-size: 11px; line-height: 1; color: #000;
@@ -351,7 +353,7 @@
     display: flex; align-items: center; justify-content: space-between;
     background: var(--face); border-top: 2px solid var(--hl); padding: 0 5px; z-index: 50;
   }
-  .file { background: var(--face); font: inherit; font-size: 13px; font-weight: bold; padding: 3px 14px; cursor: pointer; border: 1px solid; border-color: var(--hl) var(--dk) var(--dk) var(--hl); box-shadow: inset -1px -1px 0 var(--sh); }
+  .file { display: inline-flex; align-items: center; gap: 5px; background: var(--face); font: inherit; font-size: 13px; font-weight: bold; padding: 3px 14px; cursor: pointer; border: 1px solid; border-color: var(--hl) var(--dk) var(--dk) var(--hl); box-shadow: inset -1px -1px 0 var(--sh); }
   .file.on, .file:active { border-color: var(--dk) var(--hl) var(--hl) var(--dk); box-shadow: inset 1px 1px 0 var(--sh); }
   .tray { border: 1px solid; border-color: var(--sh) var(--hl) var(--hl) var(--sh); padding: 3px 14px; font-size: 13px; }
 

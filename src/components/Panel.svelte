@@ -61,7 +61,7 @@
 <div class="w2k">
   <div class="win">
     <div class="tb">
-      <span class="ttl">Panel de control</span>
+      <img class="ttlico" src="/win2k/prefs.png" alt="" /><span class="ttl">Panel de control</span>
       <span class="wbtns"><span class="wb">_</span><span class="wb">▢</span><a class="wb" href="/" aria-label="Cerrar">✕</a></span>
     </div>
     <div class="menubar"><span><u>A</u>rchivo</span><span><u>P</u>erfil</span><span>A<u>y</u>uda</span></div>
@@ -96,7 +96,7 @@
     </div>
   </div>
 
-  <div class="taskbar"><button class="btn start">▣ Inicio</button><div class="tray">{clock}</div></div>
+  <div class="taskbar"><button class="btn start"><img class="startico" src="/win2k/start.png" alt="" />Inicio</button><div class="tray">{clock}</div></div>
 </div>
 
 <style>

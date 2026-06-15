@@ -228,8 +228,8 @@
         <div class="setdiv"></div>
         <div class="about">
           <div class="ah">ACERCA DE</div>
-          <p>0xb4d1dea — diario &amp; misceláneo.</p>
-          <p>Hecho por Chuy. Astro + Svelte, inspirado en los menús de Resident Evil clásico.</p>
+          <p>0xb4d1dea — diario &amp; bullshit</p>
+          <p>Creado para suplir la asquerosa necesidad de expresarme de una manera genuina a veces con falta de inspiracion, idealidad o cualquiera de esas mamadas.</p>
         </div>
         <button class="setexit" onclick={() => (showSettings = false)}>◄ CERRAR</button>
       </div>

@@ -134,7 +134,7 @@
 <div class="w2k">
   <div class="win">
     <div class="tb">
-      <span class="ttl">ITEMS — inventario</span>
+      <img class="ttlico" src="/win2k/folder.png" alt="" /><span class="ttl">ITEMS — inventario</span>
       <span class="wbtns"><span class="wb">_</span><span class="wb">▢</span><a class="wb" href="/panel" aria-label="Cerrar">✕</a></span>
     </div>
     <div class="menubar"><span><u>A</u>rchivo</span><span><u>E</u>dición</span><span>A<u>y</u>uda</span></div>
@@ -199,7 +199,7 @@
               <legend>Items de esta sección ({selSec.items.length})</legend>
               {#each selSec.items as it}
                 <div class="trow">
-                  <span class="tic">{it.cover ? '🖼' : '▤'}</span>
+                  <span class="tic"><img src={it.cover ? '/win2k/image.png' : '/win2k/file.png'} alt="" /></span>
                   <span class="tt">{it.title || '(sin título)'}</span>
                   {#if it.current}
                     <span class="badge">actual · desde {fmtD(it.started_at)}</span>
@@ -230,7 +230,7 @@
     </div>
   </div>
 
-  <div class="taskbar"><button class="btn start">▣ Inicio</button><div class="tray">{clock}</div></div>
+  <div class="taskbar"><button class="btn start"><img class="startico" src="/win2k/start.png" alt="" />Inicio</button><div class="tray">{clock}</div></div>
 </div>
 
 <style>
@@ -272,7 +272,8 @@
   .cover img { width: 64px; height: 64px; object-fit: contain; background: #fff; border: 2px solid; border-color: #808080 #fff #fff #808080; }
 
   .trow { display: flex; align-items: center; gap: 8px; font-size: 12px; border-bottom: 1px solid #e6e3db; padding: 5px 2px; }
-  .trow .tic { flex: 0 0 auto; }
+  .trow .tic { flex: 0 0 auto; display: inline-flex; }
+  .trow .tic img { width: 16px; height: 16px; image-rendering: pixelated; }
   .trow .tt { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .badge { background: #0a246a; color: #fff; font-size: 10px; padding: 2px 6px; flex: 0 0 auto; }
   .tm { color: #777; font-size: 11px; flex: 0 0 auto; }
