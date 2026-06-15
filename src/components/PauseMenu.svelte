@@ -48,19 +48,28 @@
     crt = !crt;
     try { localStorage.setItem('crt', crt ? '1' : '0'); } catch (e) {}
   }
+  // landscape de celular: render a tamaño desktop + escala uniforme para que quepa (consola/CRT)
+  const DESIGN_H = 680; // alto de diseño; ancho = DESIGN_H * 4/3 (4:3)
+  let lsScale = $state(1);
+  function recalcScale() {
+    const w = window.innerWidth, h = window.innerHeight;
+    lsScale = w > h && h <= 540 ? Math.min(w / ((DESIGN_H * 4) / 3), h / DESIGN_H) : 1;
+  }
+
   onMount(() => {
     try {
       const v = localStorage.getItem('crt');
       if (v !== null) crt = v === '1';
     } catch (e) {}
+    recalcScale();
   });
 
   let cond = $derived(CONDITIONS[condition] ?? CONDITIONS.fine);
 </script>
 
-<svelte:window onkeydown={onKeydown} />
+<svelte:window onkeydown={onKeydown} onresize={recalcScale} />
 
-<div class="menu" class:itemsview={tab === 'items'}>
+<div class="menu" class:itemsview={tab === 'items'} style:--ls-scale={lsScale}>
   <!-- consola: portrait (alto) + tabs (arriba) + slots (condition/equip/item) -->
   <section class="console">
     <div class="portrait">
@@ -666,14 +675,23 @@
     }
   }
 
-  /* ---- landscape de celular: caja 4:3 que cabe en pantalla, sin deformar ni scroll ---- */
+  /* ---- landscape de celular: render a tamaño desktop y escalar uniforme (consola/CRT) ---- */
   @media (orientation: landscape) and (max-height: 540px) {
-    .menu { height: 100dvh; min-height: 0; overflow: hidden; padding: 8px 12px; gap: 8px; }
-    .console { gap: 4px 8px; }
-    .pfp { width: clamp(54px, 18dvh, 84px); }
-    .namebox { padding: 3px; }
-    .name { font-size: 12px; }
-    .info { overflow: auto; }
+    body { overflow: hidden; }
+    .menu {
+      --dh: 680px;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      width: calc(var(--dh) * 4 / 3);
+      height: var(--dh);
+      min-height: 0;
+      max-width: none;
+      margin: 0;
+      transform: translate(-50%, -50%) scale(var(--ls-scale, 1));
+      transform-origin: center center;
+    }
+    .grid.isitems { grid-template-columns: repeat(2, calc((var(--dh) - 280px) / 4)); }
   }
 
   /* ---- móvil: portrait horizontal, slots envuelven ---- */
