@@ -143,7 +143,7 @@
       </div>
     {:else if sel?.title}
       {#if sel.image}
-        <div class="thumb thumb-ex"><img src={sel.image} alt="" loading="lazy" /></div>
+        <a class="thumb thumb-ex" href={sel.href} aria-label={`Abrir ${sel.title}`}><img src={sel.image} alt="" loading="lazy" /></a>
       {:else}
         <div class="thumb empty"><span>{sel.type === 'diario' ? '✎' : '▤'}</span></div>
       {/if}
@@ -469,6 +469,8 @@
   }
   .thumb img { width: 100%; height: 100%; object-fit: cover; }
   /* EX file en el preview: conserva el fondo/caja, imagen completa (no recortada) y con margen */
+  .thumb-ex { cursor: pointer; text-decoration: none; }
+  .thumb-ex:hover, .thumb-ex:focus-visible { border-color: var(--red); box-shadow: 0 0 8px rgba(255, 74, 61, 0.3); outline: none; }
   .thumb-ex img { width: auto; height: auto; max-width: 82%; max-height: 86%; object-fit: contain; image-rendering: pixelated; }
   /* item en details: imagen completa (scaleToFit), centrada, con margen e inclinada 30° */
   .thumb-item { overflow: hidden; appearance: none; -webkit-appearance: none; font: inherit; cursor: zoom-in; }
