@@ -24,11 +24,13 @@
   let exNN = $derived(String(f.exfile).padStart(2, '0'));
   let bodyHtml = $derived(renderMarkdown(f.body || ''));
   let bodyEl;
+  let showBig = $state(false);
+  // Escape cierra el modal solo si Vim está OFF (con Vim, Escape = volver a modo normal)
+  function onKey(e) { if (showBig && !vimOn && e.key === 'Escape') showBig = false; }
 
-  function insertDate() {
+  function insertDate(el = bodyEl) {
     const today = new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
     const mark = `\n\n@fecha: ${today}\n\n`;
-    const el = bodyEl;
     if (el && typeof el.selectionStart === 'number') {
       const i = el.selectionStart;
       f.body = f.body.slice(0, i) + mark + f.body.slice(i);
@@ -37,7 +39,101 @@
     }
   }
 
+  // ── modo amplio: CodeMirror 6 + Vim (carga dinámica, solo en cliente) ──
+  let cmEl = $state(null);
+  let cmView = null;
+  let vimOn = $state(false);
+  let vimMode = $state('normal');
+  let _vimComp = null;
+  let _vimFn = null;
+  let _creating = false;
+  let _exDefined = false;
+  let dark = $state(false);
+  let _themeComp = null;
+  let _darkTheme = null;
+
+  async function createCM() {
+    _creating = true;
+    const [{ EditorView }, { Compartment }, { markdown }, vimmod, { basicSetup }] = await Promise.all([
+      import('@codemirror/view'),
+      import('@codemirror/state'),
+      import('@codemirror/lang-markdown'),
+      import('@replit/codemirror-vim'),
+      import('codemirror'),
+    ]);
+    const { vim, Vim, getCM } = vimmod;
+    _vimFn = vim;
+    _vimComp = new Compartment();
+    _themeComp = new Compartment();
+    _darkTheme = EditorView.theme({
+      '&': { color: '#e6e6e6', backgroundColor: '#1e1e1e' },
+      '.cm-content': { caretColor: '#fff' },
+      '.cm-cursor, .cm-dropCursor': { borderLeftColor: '#fff' },
+      '.cm-gutters': { backgroundColor: '#181818', color: '#6f6f6f', border: 'none' },
+      '.cm-activeLine': { backgroundColor: 'rgba(255,255,255,0.05)' },
+      '.cm-activeLineGutter': { backgroundColor: 'rgba(255,255,255,0.08)' },
+      '&.cm-focused .cm-selectionBackground, .cm-selectionBackground, ::selection': { backgroundColor: '#33415e' },
+      '.cm-fat-cursor': { background: '#e6e6e6', color: '#1e1e1e' },
+    }, { dark: true });
+    if (!_exDefined) {
+      // comandos ex tipo vim para guardar / salir del modal
+      Vim.defineEx('quit', 'q', () => { showBig = false; });
+      Vim.defineEx('write', 'w', () => { save(); });
+      Vim.defineEx('wquit', 'wq', () => { save(); showBig = false; });
+      Vim.defineEx('xit', 'x', () => { save(); showBig = false; });
+      _exDefined = true;
+    }
+    cmView?.destroy();
+    cmView = new EditorView({
+      doc: f.body || '',
+      parent: cmEl,
+      extensions: [
+        _vimComp.of(vimOn ? vim() : []),
+        _themeComp.of(dark ? _darkTheme : []),
+        basicSetup,
+        markdown(),
+        EditorView.lineWrapping,
+        EditorView.contentAttributes.of({ spellcheck: 'true', lang: 'es', autocapitalize: 'sentences' }),
+        EditorView.updateListener.of((u) => { if (u.docChanged) f.body = u.state.doc.toString(); }),
+      ],
+    });
+    const cm = getCM(cmView);
+    if (cm) cm.on('vim-mode-change', (e) => { vimMode = e?.mode || 'normal'; });
+    _creating = false;
+    cmView.focus();
+  }
+
+  function toggleVim() {
+    vimOn = !vimOn;
+    vimMode = 'normal';
+    try { localStorage.setItem('vim', vimOn ? '1' : '0'); } catch (e) {}
+    // recrear el editor para que el listener de modo quede con vim activo
+    if (showBig && cmEl) createCM();
+  }
+
+  function toggleDark() {
+    dark = !dark;
+    try { localStorage.setItem('editor-dark', dark ? '1' : '0'); } catch (e) {}
+    if (cmView && _themeComp) cmView.dispatch({ effects: _themeComp.reconfigure(dark ? _darkTheme : []) });
+  }
+
+  function insertDateCM() {
+    if (!cmView) return;
+    const d = new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
+    const mark = `\n\n@fecha: ${d}\n\n`;
+    const pos = cmView.state.selection.main.head;
+    cmView.dispatch({ changes: { from: pos, insert: mark }, selection: { anchor: pos + mark.length } });
+    cmView.focus();
+  }
+
+  $effect(() => {
+    if (showBig && cmEl && !cmView && !_creating) createCM();
+    else if (!showBig && cmView) { cmView.destroy(); cmView = null; }
+  });
+
   onMount(() => {
+    try { const v = localStorage.getItem('vim'); if (v !== null) vimOn = v === '1'; } catch (e) {}
+    try { const d = localStorage.getItem('editor-dark'); if (d !== null) dark = d === '1'; } catch (e) {}
     const t = () => (clock = new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }));
     t();
     const i = setInterval(t, 10000);
@@ -172,13 +268,13 @@
   const fmtTs = (t) => new Date(t).toLocaleString('es-ES');
 </script>
 
-<div class="w2k">
+<div class="w2k" class:dark={dark}>
   <div class="win">
     <div class="tb">
       <img class="ttlico" src="/win2k/editor.png" alt="" /><span class="ttl">EDITOR — diario &amp; blog</span>
       <span class="wbtns"><span class="wb">_</span><span class="wb">▢</span><a class="wb" href="/panel" aria-label="Cerrar">✕</a></span>
     </div>
-    <div class="menubar"><span><u>A</u>rchivo</span><span><u>E</u>dición</span><span><u>V</u>er</span><span>A<u>y</u>uda</span></div>
+    <div class="menubar"><span><u>A</u>rchivo</span><span><u>E</u>dición</span><span><u>V</u>er</span><span>A<u>y</u>uda</span><button class="darkbtn" type="button" onclick={toggleDark} title="Tema claro / oscuro">{dark ? '☀ Claro' : '🌙 Oscuro'}</button></div>
 
     <div class="winbody">
       <div class="ed">
@@ -272,7 +368,10 @@
             <div class="bcol">
               <div class="blabel">
                 <span>Cuerpo (markdown)</span>
-                <button class="btn small" type="button" onclick={insertDate}>📅 fecha de hoy</button>
+                <span class="blabtns">
+                  <button class="btn small" type="button" title="Escribir en grande" onclick={() => (showBig = true)}>⛶ Ampliar</button>
+                  <button class="btn small" type="button" onclick={() => insertDate()}>📅 fecha de hoy</button>
+                </span>
               </div>
               <textarea bind:this={bodyEl} bind:value={f.body} rows="14" placeholder="escribe aquí…" spellcheck="true" lang="es"></textarea>
             </div>
@@ -306,7 +405,29 @@
   </div>
 
   <div class="taskbar"><button class="btn start"><img class="startico" src="/win2k/start.png" alt="" />Inicio</button><div class="tray">{clock}</div></div>
+
+  {#if showBig}
+    <div class="bigedit" role="dialog" aria-modal="true">
+      <div class="bigbar">
+        <span class="bigttl">✎ Cuerpo — modo amplio</span>
+        {#if vimOn}
+          <span class="vimmode" data-mode={vimMode}>{vimMode.toUpperCase()}</span>
+          <span class="vimhint">:w guarda · :q sale</span>
+        {/if}
+        <button class="btn small" type="button" class:vimon={vimOn} onclick={toggleVim} title="Modo Vim">Vim: {vimOn ? 'ON' : 'OFF'}</button>
+        <button class="btn small" type="button" onclick={toggleDark} title="Tema claro / oscuro">{dark ? '☀' : '🌙'}</button>
+        <button class="btn small" type="button" onclick={insertDateCM}>📅 fecha de hoy</button>
+        <button class="btn primary" type="button" onclick={() => (showBig = false)}>✓ Listo</button>
+      </div>
+      <div class="bigwrap">
+        <div class="cm" bind:this={cmEl}></div>
+        <div class="prose sunken bigprose">{@html bodyHtml}</div>
+      </div>
+    </div>
+  {/if}
 </div>
+
+<svelte:window onkeydown={onKey} />
 
 <style>
   .win { max-width: 1100px; margin: 0 auto; }
@@ -351,6 +472,29 @@
   .bcol { display: flex; flex-direction: column; gap: 4px; }
   .plabel { font-size: 12px; color: #222; }
   .blabel { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 12px; color: #222; }
+  .blabtns { display: flex; gap: 6px; }
+
+  /* modal "modo amplio" para escribir el cuerpo a gusto */
+  .bigedit { position: fixed; inset: 0; z-index: 300; background: var(--face); display: flex; flex-direction: column; gap: 8px; padding: 10px; }
+  .bigbar { display: flex; align-items: center; gap: 10px; }
+  .bigttl { flex: 1; font-weight: bold; font-size: 14px; color: #222; }
+  .bigwrap { flex: 1; min-height: 0; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr; gap: 10px; }
+  .bigwrap textarea { width: 100%; height: 100%; resize: none; font-size: 15px; }
+  .bigedit .bigprose { height: 100%; max-height: none; min-height: 0; overflow: auto; }
+  .cm { height: 100%; min-height: 0; overflow: hidden; background: #fff; border: 2px solid; border-color: var(--sh) var(--hl) var(--hl) var(--sh); }
+  .cm :global(.cm-editor) { height: 100%; }
+  .cm :global(.cm-editor.cm-focused) { outline: none; }
+  .cm :global(.cm-scroller) { font-family: ui-monospace, 'Courier New', monospace; font-size: 15px; line-height: 1.6; }
+  .btn.vimon { border-color: var(--dk) var(--hl) var(--hl) var(--dk); box-shadow: inset 1px 1px 0 var(--sh); font-weight: bold; }
+  .vimmode { font-weight: bold; font-size: 12px; letter-spacing: 0.12em; padding: 3px 10px; background: #0a246a; color: #fff; }
+  .vimmode[data-mode='insert'] { background: #0a7a0a; }
+  .vimmode[data-mode='visual'] { background: #9a5a00; }
+  .vimmode[data-mode='replace'] { background: #9a0000; }
+  .vimhint { font-size: 11px; color: #555; }
+  @media (max-width: 760px) {
+    .bigwrap { grid-template-columns: 1fr; }
+    .bigprose { display: none; }
+  }
   .prose {
     color: #111; padding: 12px 14px; min-height: 320px; max-height: 60vh; overflow: auto; line-height: 1.6; font-size: 14px;
   }
@@ -375,6 +519,35 @@
   .rrow { display: flex; align-items: center; gap: 10px; font-size: 12px; color: #333; }
   .rrow .rt { min-width: 160px; }
   .rrow .rn { flex: 1; color: #666; }
+
+  /* botón de tema (menubar) */
+  .darkbtn { margin-left: auto; background: transparent; border: none; font: inherit; font-size: 12px; cursor: pointer; color: inherit; padding: 0 2px; }
+  .darkbtn:hover { text-decoration: underline; }
+
+  /* ---- dark mode: superficies blancas del editor ---- */
+  :global(.w2k.dark) .erow { color: #e2e2e2; border-bottom-color: #333; }
+  :global(.w2k.dark) .erow .m { color: #8f8f8f; }
+  :global(.w2k.dark) .media { background: #2a2a2a; }
+  :global(.w2k.dark) .libitem { background: #1e1e1e; }
+  :global(.w2k.dark) .mlabel,
+  :global(.w2k.dark) .plabel,
+  :global(.w2k.dark) .blabel,
+  :global(.w2k.dark) .mhint,
+  :global(.w2k.dark) .rh,
+  :global(.w2k.dark) .rrow { color: #c2c2c2; }
+  :global(.w2k.dark) .rrow .rn { color: #8f8f8f; }
+  :global(.w2k.dark) .bigttl { color: #e6e6e6; }
+  :global(.w2k.dark) .vimhint { color: #9a9a9a; }
+  :global(.w2k.dark) .status { color: #6fd06f; }
+  :global(.w2k.dark) .del { color: #ff6b6b; }
+  :global(.w2k.dark) .cm { background: #1e1e1e; }
+  :global(.w2k.dark) .prose { color: #dcdcdc; }
+  :global(.w2k.dark) .prose :global(h1),
+  :global(.w2k.dark) .prose :global(h2),
+  :global(.w2k.dark) .prose :global(h3) { color: #84acec; }
+  :global(.w2k.dark) .prose :global(a) { color: #6fb0ff; }
+  :global(.w2k.dark) .prose :global(code) { background: #333; }
+  :global(.w2k.dark) .prose :global(blockquote) { border-left-color: #555; color: #aaa; }
 
   .start { font-weight: bold; }
 

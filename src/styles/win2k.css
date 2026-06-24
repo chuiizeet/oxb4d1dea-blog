@@ -142,3 +142,25 @@
   z-index: 100;
 }
 .w2k .tray { border: 1px solid; border-color: var(--sh) var(--hl) var(--hl) var(--sh); padding: 3px 12px; font-size: 13px; }
+
+/* ===== Dark mode (cuando .w2k lleva .dark) ===== */
+.w2k.dark {
+  --face: #3a3a3a;
+  --hl: #585858;
+  --sh: #1c1c1c;
+  --dk: #0c0c0c;
+  color: #e4e4e4;
+}
+.w2k.dark::after { background: repeating-linear-gradient(rgba(0, 0, 0, 0.3) 0 1px, transparent 1px 3px), rgba(0, 0, 0, 0.5); opacity: 1; }
+.w2k.dark .wb { color: #e6e6e6; }
+.w2k.dark .menubar { color: #d2d2d2; border-bottom-color: var(--dk); }
+.w2k.dark .menubar u { border-bottom-color: #d2d2d2; }
+.w2k.dark .btn { color: #ededed; }
+.w2k.dark .btn:disabled { color: #777; }
+.w2k.dark label { color: #c4c4c4; }
+.w2k.dark input[type='text'],
+.w2k.dark input[type='date'],
+.w2k.dark input[type='password'],
+.w2k.dark select,
+.w2k.dark textarea { background: #1e1e1e; color: #e8e8e8; }
+.w2k.dark .sunken { background: #1e1e1e; }
